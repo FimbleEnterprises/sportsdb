@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.fimbleenterprises.sportsdb">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+
+    <application
+        android:name="com.fimbleenterprises.sportsdb.MyApp"
+        android:allowBackup="true"
+        android:icon="@drawable/sports_icon"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:hardwareAccelerated="true"
+        android:theme="@style/AppTheme2">
+
+        <!--FACEBOOK SSO-->
+        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_application_id"/>
+        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>
+
+
+        <!--                    NOT IMPLEMENTING FOR NOW                                        -->
+        <!-- This forces us to intialize the Facebook SDK manually from MainActivity, MyApp class (or wherever)
+         otherwise it will be auto-initialized on application start -->
+        <!--<meta-data android:name="com.facebook.sdk.AutoInitEnabled" android:value="false"/>-->
+
+        <!--Allows us to create Facebook events codelessly without releasing a new version -->
+        <!--<meta-data
+            android:name="com.facebook.sdk.CodelessDebugLogEnabled"
+            android:value="true" />-->
+
+        <activity
+            android:name="com.fimbleenterprises.sportsdb.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

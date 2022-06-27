@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/findTeamsFragment"
+        android:icon="@android:drawable/ic_search_category_default"
+        android:title="@string/find_teams_menu_item" />
+
+    <item
+        android:id="@+id/myTeamsFragment"
+        android:icon="@drawable/my_teams_icon"
+        android:title="@string/my_teams_menu_item" />
+
+    <item
+        android:id="@+id/findLeaguesFragment"
+        android:icon="@drawable/my_teams_icon"
+        android:visible="false"
+        android:title="@string/find_leagues_menu_item" />
+
+    <item
+        android:id="@+id/viewHighlightsFragment"
+        android:icon="@drawable/my_teams_icon"
+        android:visible="false"
+        android:title="@string/view_highlights" />
+</menu>

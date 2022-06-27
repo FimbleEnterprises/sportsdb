@@ -1,0 +1,257 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'dagger.hilt.android.plugin'
+    id 'kotlin-kapt'
+    id 'androidx.navigation.safeargs.kotlin'
+    id 'kotlin-parcelize'
+    id 'com.google.gms.google-services'
+}
+
+android {
+    compileSdk 32
+
+    defaultConfig {
+        applicationId "com.fimbleenterprises.sportsdb"
+        minSdk 26
+        targetSdk 32
+        versionCode 9
+        versionName "1.0"
+        buildConfigField("String","API_KEY", MY_KEY)
+        buildConfigField("String","BASE_URL", MY_URL)
+        buildConfigField("String","SPORTSDB_FREE_API_KEY", SPORTSDB_FREEKEY)
+        buildConfigField("String","SPORTSDB_PAID_API_KEY", SPORTSDB_PAIDKEY)
+        buildConfigField("String","SPORTSDB_BASE_URL", SPORTSDB_URL)
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            debugSymbolLevel 'symbol_table'
+        }
+
+    }
+
+
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    // Place this in the android section of the app build gradle
+    buildFeatures {
+        // -----------------------------------------------------------
+        //                Viewbinding and Databinding
+        //
+        //       DataBinding can do everything that ViewBinding can
+        //              at the cost of longer build times
+        // -----------------------------------------------------------
+        // Use dataBinding if the layouts are advanced.
+        // dataBinding true
+        // Use viewBinding if the layouts are simple
+        dataBinding true
+        viewBinding true
+    }
+}
+
+
+
+dependencies {
+
+
+    // -----------------------------------------------------------
+    //                     FIREBASE ANALYTICS
+    // -----------------------------------------------------------
+    // Declare the dependency for the Analytics library
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-core:21.0.0'
+    implementation 'com.google.android.gms:play-services-tagmanager:18.0.1'
+    implementation 'com.google.firebase:firebase-analytics:21.0.0'
+    // Import the BoM for the Firebase platform
+    implementation platform('com.google.firebase:firebase-bom:30.1.0')
+    // Don't forget to add the following above:
+    // id 'com.google.gms.google-services'
+
+    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.6.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.preference:preference-ktx:1.2.0'
+    implementation 'com.google.android.libraries.maps:maps:3.1.0-beta'
+    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:11.0.1'
+    implementation 'com.google.firebase:firebase-common-ktx:20.1.1'
+    implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.9.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.6.1'
+    implementation 'com.android.volley:volley:1.2.1'
+
+    // -----------------------------------------------------------
+    //                      GOOGLE BILLING
+    // -----------------------------------------------------------
+    def billing_version = "5.0.0"
+    implementation "com.android.billingclient:billing-ktx:$billing_version"
+
+
+    /*                  NOT IMPLEMENTING FOR NOW
+    // -----------------------------------------------------------
+    //                  FIREBASE AUTHENTICATION
+    // -----------------------------------------------------------
+    def firebase_authver = "7.2.0"
+    implementation "com.firebaseui:firebase-ui-auth:$firebase_authver"
+    // Required only if Facebook login support is required
+    // Find the latest Facebook SDK releases here: https://goo.gl/Ce5L94
+    implementation 'com.facebook.android:facebook-android-sdk:14.0.0'
+
+    // Import the BoM for the Firebase platform
+    implementation platform('com.google.firebase:firebase-bom:30.1.0')
+
+    // Declare the dependency for the Firebase Authentication library
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation 'com.google.firebase:firebase-auth-ktx'
+
+    // -----------------------------------------------------------
+    //                        FACEBOOK SDK
+    // -----------------------------------------------------------
+    implementation 'com.facebook.android:facebook-android-sdk:latest.release'
+
+    // -----------------------------------------------------------
+    //                     FACEBOOK MARKETING
+    // -----------------------------------------------------------
+    implementation 'com.facebook.android:facebook-marketing:latest.release'
+    */
+
+    // -----------------------------------------------------------
+    //                        JODA TIME
+    // -----------------------------------------------------------
+    def joda_ver = "2.10.14"
+    implementation "joda-time:joda-time:$joda_ver"
+
+
+    // -----------------------------------------------------------
+    //                 Firebase Real-time DB
+    // -----------------------------------------------------------
+    implementation 'com.google.firebase:firebase-database:20.0.5'
+
+
+    // -----------------------------------------------------------
+    //                        Hilt
+    // -----------------------------------------------------------
+    def hilt_ver = "2.38.1"
+    implementation "com.google.dagger:hilt-android:$hilt_ver"
+    kapt "com.google.dagger:hilt-android-compiler:$hilt_ver"
+
+    // CUT AND PASTE THE NEXT LINE TO THE TOP OF THIS FILE UNDER PLUGINS
+    // apply plugin: 'dagger.hilt.android.plugin'
+
+    // IF NOT PRESENT - CUT AND PASTE IN THIS FILE (app-level build.gradle)
+    /*    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }*/
+
+    // CUT AND PASTE THIS TO THE -= PROJECT-LEVEL =- BUILD.GRADLE FILE UNDER DEPENDENCIES!
+    // classpath 'com.google.dagger:hilt-android-gradle-plugin:2.28-alpha'
+
+    // -----------------------------------------------------------
+    //                        Retrofit
+    // -----------------------------------------------------------
+    def retrofit_version = "2.9.0"
+    def okhttp_version = "4.7.2"
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    implementation("com.squareup.okhttp3:logging-interceptor:$okhttp_version")
+
+    // -----------------------------------------------------------
+    //                          Room
+    // -----------------------------------------------------------
+    def roomVersion = "2.4.2"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    annotationProcessor("androidx.room:room-compiler:$roomVersion")
+    // To use Kotlin annotation processing tool (kapt)
+    kapt("androidx.room:room-compiler:$roomVersion")
+    implementation("com.google.devtools.ksp:symbol-processing-api:1.5.0-1.0.0-alpha10")
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation("androidx.room:room-ktx:$roomVersion")
+
+    // -----------------------------------------------------------
+    //                         Coroutines
+    // -----------------------------------------------------------
+    def coroutines_ver = "1.6.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_ver"
+
+    // -----------------------------------------------------------
+    //                        Mock Webserver
+    // -----------------------------------------------------------
+    def mock_web_ver = "4.9.0"
+    implementation "com.squareup.okhttp3:mockwebserver:$mock_web_ver"
+    implementation "com.squareup.okhttp3:okhttp:$mock_web_ver"
+
+    // -----------------------------------------------------------
+    //                           Glide
+    // -----------------------------------------------------------
+    // Don't forget to add| id 'kotlin-kapt' |to the plugin block at the top of the file!
+    def glide_version = "4.13.0"
+    implementation "com.github.bumptech.glide:glide:$glide_version"
+    kapt "com.github.bumptech.glide:compiler:$glide_version"
+
+    // -----------------------------------------------------------
+    //                    Viewmodel and LiveData
+    // -----------------------------------------------------------
+    def lifecycle_version = "2.5.0-rc02"
+
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
+
+    // LiveData
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version")
+
+    // Saved state module for ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version")
+
+    // Annotation processor
+    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+
+    // -----------------------------------------------------------
+    //                         Navigation
+    // -----------------------------------------------------------
+    def nav_version = "2.4.2"
+    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+
+    // -----------------------------------------------------------
+    //                     LOCATION SERVICES
+    // -----------------------------------------------------------
+    def loc_ver = "20.0.0"
+    def map_ver = "18.0.2"
+    implementation "com.google.android.gms:play-services-maps:$map_ver"
+
+    // -----------------------------------------------------------
+    //                       Unit Testing
+    // -----------------------------------------------------------
+    def arch_version = "2.1.0"
+    testImplementation "androidx.arch.core:core-testing:$arch_version"
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1'
+    testImplementation "com.google.truth:truth:1.1"
+    testImplementation 'org.mockito:mockito-core:2.28.2'
+
+    androidTestImplementation "androidx.arch.core:core-testing:$arch_version"
+    androidTestImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1'
+    androidTestImplementation "com.google.truth:truth:1.1"
+    androidTestImplementation 'org.mockito:mockito-core:2.28.2'
+
+
+}

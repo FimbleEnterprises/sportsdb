@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/myTeamsFragment">
+
+    <action
+        android:id="@+id/action_goto_select_league"
+        app:destination="@id/findLeaguesFragment"
+        app:launchSingleTop="true"
+        app:popUpTo="@+id/mobile_navigation"
+        app:popUpToInclusive="true" />
+
+    <action
+        android:id="@+id/action_goto_select_team"
+        app:destination="@id/findTeamsFragment"
+        app:launchSingleTop="true"
+        app:popUpTo="@+id/findTeamsFragment"
+        app:popUpToInclusive="true" />
+
+    <action
+        android:id="@+id/action_goto_view_scores"
+        app:destination="@+id/viewSelectedTeamsScoresFragment"
+        app:launchSingleTop="true"
+        app:popUpTo="@+id/mobile_navigation"
+        app:popUpToInclusive="true" />
+
+    <action
+        android:id="@+id/action_goto_my_teams"
+        app:destination="@id/myTeamsFragment"
+        app:launchSingleTop="true"
+        app:popUpTo="@+id/mobile_navigation"
+        app:popUpToInclusive="true" />
+
+    <action
+        android:id="@+id/action_goto_test_fragment"
+        app:destination="@id/testFragment"
+        app:launchSingleTop="true"
+        app:popUpTo="@+id/mobile_navigation"
+        app:popUpToInclusive="true" />
+
+    <fragment
+        android:id="@+id/myTeamsFragment"
+        android:name="com.fimbleenterprises.sportsdb.MyTeamsFragment"
+        android:label="MyTeamsFragment" >
+        <action
+            android:id="@+id/action_myTeamsFragment_to_viewSelectedTeamsScoresFragment"
+            app:launchSingleTop="true"
+            app:destination="@id/viewSelectedTeamsScoresFragment" />
+        <action
+            android:id="@+id/action_myTeamsFragment_to_findTeamsFragment3"
+            app:destination="@id/findTeamsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/findLeaguesFragment"
+        android:name="com.fimbleenterprises.sportsdb.FindLeaguesFragment"
+        android:label="fragment_find_leagues"
+        tools:layout="@layout/fragment_find_leagues" />
+    <fragment
+        android:id="@+id/findTeamsFragment"
+        android:name="com.fimbleenterprises.sportsdb.FindTeamsFragment"
+        android:label="fragment_find_teams"
+        tools:layout="@layout/fragment_list_teams" />
+    <fragment
+        android:id="@+id/viewSelectedTeamsScoresFragment"
+        android:name="com.fimbleenterprises.sportsdb.ViewSelectedTeamsScoresFragment"
+        android:label="fragment_view_selected_teams_scores"
+        tools:layout="@layout/fragment_view_selected_teams_scores" >
+        <action
+            android:id="@+id/action_viewSelectedTeamsScoresFragment_to_action_goto_view_highlights"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/viewHighlightsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/viewHighlightsFragment"
+        android:name="com.fimbleenterprises.sportsdb.ViewHighlightsFragment"
+        android:label="fragment_view_highlights"
+        tools:layout="@layout/fragment_view_highlights" >
+        <argument
+            android:name="teamname"
+            app:argType="string"
+            android:defaultValue="null" />
+        <argument
+            android:name="url"
+            app:argType="string"
+            android:defaultValue="null" />
+    </fragment>
+    <fragment
+        android:id="@+id/testFragment"
+        android:name="com.fimbleenterprises.sportsdb.TestFragment"
+        android:label="fragment_test"
+        tools:layout="@layout/fragment_test" />
+
+</navigation>

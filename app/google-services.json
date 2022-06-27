@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "891693847190",
+    "project_id": "sportsdb-353711",
+    "storage_bucket": "sportsdb-353711.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:891693847190:android:34ad5895ddb1778afbe8b7",
+        "android_client_info": {
+          "package_name": "com.fimbleenterprises.sportsdb"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "891693847190-ohflgstjvcp7hb0mt8rv7g57h25kpn0p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fimbleenterprises.sportsdb",
+            "certificate_hash": "db5484fe0b53757127d237b3e38b2a92ff463ef5"
+          }
+        },
+        {
+          "client_id": "891693847190-37j0593thf20ipfafnu0bc4so3n866i8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTUBcSewAuxcR7QDOABx6CIjlLF_M7YZ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "891693847190-37j0593thf20ipfafnu0bc4so3n866i8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
