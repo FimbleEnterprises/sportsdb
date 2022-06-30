@@ -5,21 +5,18 @@ import android.content.Context
 import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
-import android.view.View.*
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.fimbleenterprises.sportsdb.MyApp
 import com.fimbleenterprises.sportsdb.R
 import com.fimbleenterprises.sportsdb.data.model.GameResult
-import com.fimbleenterprises.sportsdb.util.FimTown
 import com.fimbleenterprises.sportsdb.databinding.GameResultListItemBinding
 import com.fimbleenterprises.sportsdb.util.Helpers
 import org.joda.time.DateTime
-import kotlin.coroutines.coroutineContext
 
 class GameResultsAdapter constructor(private val context: Context):RecyclerView.Adapter<GameResultsAdapter.EventsViewHolder>() {
 

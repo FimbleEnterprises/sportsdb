@@ -7,6 +7,7 @@ import com.android.billingclient.api.*
 
 /**
  * NOT IMPLEMENTED YET!  PLACEHOLDER!  NEEDS WORK!
+ * Was spending too much time to justify implementation.  Maybe in future i'll circle back.
  * FROM:
  * https://adapty.io/blog/android-in-app-purchases-google-play-billing-library-part-1
  * https://adapty.io/blog/android-in-app-purchases-google-play-billing-library-part-2
@@ -40,13 +41,13 @@ class MyBillingWrapper(context: Context) : PurchasesUpdatedListener {
                 queryProductsForType(
                     skusList,
                     BillingClient.SkuType.INAPP
-                ) { billingResult, skuDetailsList ->
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                        products.addAll(skuDetailsList ?: listOf())
+                ) { billingRslt: BillingResult, skuDetails: MutableList<SkuDetails>? ->
+                    if (billingRslt.responseCode == BillingClient.BillingResponseCode.OK) {
+                        products.addAll(skuDetails ?: listOf())
                         listener.onSuccess(products)
                     } else {
                         listener.onFailure(
-                            Error(billingResult.responseCode, billingResult.debugMessage)
+                            Error(billingRslt.responseCode, billingRslt.debugMessage)
                         )
                     }
                 }
@@ -69,6 +70,7 @@ class MyBillingWrapper(context: Context) : PurchasesUpdatedListener {
                 listener
             )
         }
+
     }
 
     private fun onConnected(block: () -> Unit) {
@@ -95,8 +97,8 @@ class MyBillingWrapper(context: Context) : PurchasesUpdatedListener {
     }
 
     override fun onPurchasesUpdated(p0: BillingResult, p1: MutableList<Purchase>?) {
+
         Log.i(TAG, "-=BillingClientWrapper:onPurchasesUpdated  =-")
-        MyApp.AppPreferences.isPro = true
     }
 
     companion object {

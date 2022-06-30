@@ -7,8 +7,10 @@ import android.view.*
 import androidx.fragment.app.Fragment
 import android.widget.Toast
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.fimbleenterprises.sportsdb.data.model.SportsTeam
 import com.fimbleenterprises.sportsdb.databinding.FragmentViewSelectedTeamsScoresBinding
 import com.fimbleenterprises.sportsdb.presentation.adapter.GameResultsAdapter
 import com.fimbleenterprises.sportsdb.presentation.adapter.ScheduledGamesAdapter
@@ -20,6 +22,7 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
     private lateinit var viewModel: SportsdbViewModel
     private lateinit var scheduledGamesAdapter: ScheduledGamesAdapter
     private lateinit var gameResultsAdapter: GameResultsAdapter
+    private lateinit var selectedTeam: SportsTeam
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +45,14 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
         scheduledGamesAdapter = (activity as MainActivity).scheduledGamesAdapter
         gameResultsAdapter = (activity as MainActivity).gameResultsAdapter
 
+        val args : ViewSelectedTeamsScoresFragmentArgs by navArgs()
+        selectedTeam = args.team
+        Log.i(TAG, "-=ViewSelectedTeamsScoresFragment:onViewCreated NavArgs passed" +
+                ": ${selectedTeam.strTeam} =-")
+
+        findNavController().navigate(R.id.myTeamsFragment)
+        Toast.makeText(context, "No team selected!", Toast.LENGTH_SHORT).show()
+
         initRecyclerViews()
         buildTeamDetails()
 
@@ -53,10 +64,10 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
         }
 
         (activity as MainActivity).apply {
-            this.title = MyApp.AppPreferences.currentTeam?.strTeam
+            this.title = selectedTeam.strTeam
 
             // log analytics
-            myAnalytics.logViewedTeamScoresEvent(MyApp.AppPreferences.currentTeam?.strTeam)
+            myAnalytics.logViewedTeamScoresEvent(selectedTeam.strTeam)
         }
 
     }
@@ -100,12 +111,12 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
 
         // Show team picture using Glide
         Glide.with(binding.imageView.context).
-        load(MyApp.AppPreferences.currentTeam?.strTeamLogo).into(binding.imageView)
+        load(selectedTeam.strTeamLogo).into(binding.imageView)
 
-        if (MyApp.AppPreferences.currentTeam?.strDescriptionEN == null) {
+        if (selectedTeam.strDescriptionEN == null) {
             binding.txtAbout.text = getString(R.string.no_desc_found)
         } else {
-            binding.txtDescription.text = MyApp.AppPreferences.currentTeam!!.strDescriptionEN
+            binding.txtDescription.text = selectedTeam.strDescriptionEN
         }
         getNextFiveGames()
         getLastFiveGames()
@@ -146,7 +157,7 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
         // Clear list
         gameResultsAdapter.differ.submitList(null)
 
-        viewModel.getLastFiveGames(MyApp.AppPreferences.currentTeam!!.idTeam)
+        viewModel.getLastFiveGames(selectedTeam.idTeam)
         viewModel.lastFiveEvents.observe(viewLifecycleOwner) { response ->
             when (response) {
                 is com.fimbleenterprises.sportsdb.util.Resource.Success -> {
@@ -182,7 +193,7 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
         // Clear list
         scheduledGamesAdapter.differ.submitList(null)
 
-        viewModel.getNextFiveGames(MyApp.AppPreferences.currentTeam!!.idTeam)
+        viewModel.getNextFiveGames(selectedTeam.idTeam)
         viewModel.scheduledEvents.observe(viewLifecycleOwner) { response ->
             when (response) {
                 is com.fimbleenterprises.sportsdb.util.Resource.Success -> {

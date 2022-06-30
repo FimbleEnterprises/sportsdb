@@ -13,7 +13,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.android.billingclient.api.SkuDetails
 import com.fimbleenterprises.sportsdb.databinding.ActivityMainBinding
 import com.fimbleenterprises.sportsdb.presentation.adapter.GameResultsAdapter
 import com.fimbleenterprises.sportsdb.presentation.adapter.LeaguesAdapter
@@ -105,6 +104,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menu?.findItem(R.id.action_purchase_pro)?.isVisible = viewModel.userIsPro.get()
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -114,6 +114,9 @@ class MainActivity : AppCompatActivity() {
                 val url = "https://www.freeprivacypolicy.com/live/226786c7-4348-4919-bbb7-e0313f06562b"
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 startActivity(browserIntent)
+            }
+            R.id.action_purchase_pro -> {
+                viewModel.showOptionToBuyPro(supportFragmentManager)
             }
         }
         return super.onOptionsItemSelected(item)

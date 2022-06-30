@@ -2,7 +2,6 @@ package com.fimbleenterprises.sportsdb.domain.usecase
 
 import android.util.Log
 import com.fimbleenterprises.sportsdb.data.model.AllTeamsAPIResponse
-import com.fimbleenterprises.sportsdb.data.model.SportsTeam
 import com.fimbleenterprises.sportsdb.domain.repository.MainSportsdbRepository
 import com.fimbleenterprises.sportsdb.util.Resource
 

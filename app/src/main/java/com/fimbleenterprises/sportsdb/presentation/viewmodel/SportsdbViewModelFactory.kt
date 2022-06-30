@@ -15,6 +15,7 @@ import com.fimbleenterprises.sportsdb.domain.usecase.*
  * ```
  * viewModel = ViewModelProvider(this,factory).get(NewsViewModel::class.java)
  */
+@Suppress("UNCHECKED_CAST")
 class SportsdbViewModelFactory(
     private val app:Application,
     private val getTeamsFromAPIUseCase: GetTeamsFromAPIUseCase,
@@ -38,7 +39,8 @@ class SportsdbViewModelFactory(
             deleteSavedTeamsUseCase,
             getLastFiveEventsFromAPIUseCase,
             searchTeamToFollowUseCase,
-            getAllLeaguesFromAPIUseCase
+            getAllLeaguesFromAPIUseCase,
+            myBillingInstance
         ) as T
     }
 

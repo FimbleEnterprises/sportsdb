@@ -7,12 +7,12 @@ import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.fimbleenterprises.sportsdb.data.model.ScheduledGame
-import com.fimbleenterprises.sportsdb.util.FimTown
 import com.fimbleenterprises.sportsdb.databinding.EventListItemBinding
 import com.fimbleenterprises.sportsdb.util.Helpers
 import org.joda.time.DateTime
 
-class ScheduledGamesAdapter constructor():RecyclerView.Adapter<ScheduledGamesAdapter.EventsViewHolder>() {
+@Suppress("unused")
+class ScheduledGamesAdapter: RecyclerView.Adapter<ScheduledGamesAdapter.EventsViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EventsViewHolder {
         val binding = EventListItemBinding
@@ -27,21 +27,13 @@ class ScheduledGamesAdapter constructor():RecyclerView.Adapter<ScheduledGamesAda
 
      /**
      * This a required callback object needed to leverage the differ val below.  This setup is
-     * designed to replace the old .notifyDatasetChanged method that was deemed overy inefficient.
+     * designed to replace the old .notifyDatasetChanged method that was deemed overly inefficient.
      */
     private val callback = object : DiffUtil.ItemCallback<ScheduledGame>() {
 
         /*
         Compares a single item using an arbitrary definition of sameness (in this case we chose
-        the item's url property because they are always unique to the item.
-
-        Called to check whether two objects represent the same item.
-        For example, if your items have unique ids, this method should check their id equality.
-
-        Note: null items in the list are assumed to be the same as another null item and are
-        assumed to not be the same as a non-null item. This callback will not be invoked for
-        either of those cases.
-
+        the item's strEvent property because they are always unique to the item.
         */
         override fun areItemsTheSame(oldItem: ScheduledGame, newItem: ScheduledGame): Boolean {
             return oldItem.strEvent == newItem.strEvent
@@ -49,13 +41,13 @@ class ScheduledGamesAdapter constructor():RecyclerView.Adapter<ScheduledGamesAda
 
         /*
         Called to check whether two items have the same data.
-        This information is used to detect if the contents of an item have changed.
+        This is used to detect if the contents of an item have changed.
         */
         override fun areContentsTheSame(oldItem: ScheduledGame, newItem: ScheduledGame): Boolean {
            return oldItem == newItem
         }
 
-    } // callback
+    }
 
     /**
      * This leverages the AsyncListDiffer class from the DiffUtil library.  It is effectively the
@@ -93,7 +85,7 @@ class ScheduledGamesAdapter constructor():RecyclerView.Adapter<ScheduledGamesAda
                Log.i(TAG, "EventsViewHolder|bind(args:[event]")
 
                if (scheduledGame.dateEvent != null) {
-                   val dtEvent = DateTime(scheduledGame.dateEvent).toLocalDateTime();
+                   val dtEvent = DateTime(scheduledGame.dateEvent).toLocalDateTime()
                    val prettyDate = Helpers.DatesAndTimes.getPrettyDateAndTime(dtEvent.toDateTime())
                    binding.tvDescription.text = prettyDate
                }

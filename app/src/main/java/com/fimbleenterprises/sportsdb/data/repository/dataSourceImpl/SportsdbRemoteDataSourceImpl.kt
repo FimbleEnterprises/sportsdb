@@ -26,8 +26,8 @@ class SportsdbRemoteDataSourceImpl(
         return sportsdbAPIService.getAllLeagues()
     }
 
-    override suspend fun searchTeams(t: String): Response<AllTeamsAPIResponse> {
-        return sportsdbAPIService.searchTeamsInApi(t)
+    override suspend fun searchTeams(query: String): Response<AllTeamsAPIResponse> {
+        return sportsdbAPIService.searchTeamsInApi(query)
     }
 
     /**

@@ -32,9 +32,10 @@ class FindLeaguesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         binding = FragmentFindLeaguesBinding.bind(view)
-        leaguesadapter = (activity as MainActivity).leaguesAdapter
-        viewmodel = (activity as MainActivity).viewModel
+        (activity as MainActivity).leaguesAdapter.also { leaguesadapter = it }
+        (activity as MainActivity).viewModel.also { viewmodel = it }
         initRecyclerView()
         initSearchView()
         getAllLeagues()
@@ -43,7 +44,7 @@ class FindLeaguesFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        (activity as MainActivity).title = "Choose a league"
+        (activity as MainActivity).title = getString(R.string.choose_league)
     }
 
     private fun initRecyclerView() {
@@ -62,18 +63,17 @@ class FindLeaguesFragment : Fragment() {
     }
 
     /**
-     * Sets up the search view
+     * Sets up the search view and adds some simple pre-reqs prior to searching
      */
     private fun initSearchView() {
         binding.svLeagues.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-
             override fun onQueryTextSubmit(usertext: String?): Boolean {
                 if (usertext != null && usertext.length > 2) {
                     filterLeagues(usertext)
                 } else {
                     getAllLeagues()
                 }
-                return false // false= Default action performed (hide keyboard in this case)
+                return false // false = Default action performed (hide keyboard in this case)
             }
 
             override fun onQueryTextChange(usertext: String?): Boolean {
@@ -90,7 +90,7 @@ class FindLeaguesFragment : Fragment() {
     }
 
     /**
-     * Queries the API for all teams in the currently selected league.
+     * Queries the API for all leagues
      */
     private fun getAllLeagues() {
 
@@ -99,19 +99,11 @@ class FindLeaguesFragment : Fragment() {
             when (response) {
                 is com.fimbleenterprises.sportsdb.util.Resource.Success -> {
                     hideProgressBar()
-                    response.data?.let {
-                        Log.i(TAG, "ChooseLeagueFragment|getAllLeagues(args:[]")
-                        if (it.leagues != null) {
-                            leaguesadapter.differ.submitList(it.leagues)
-                        } else {
-                            val emptyList = ArrayList<League>()
-                            emptyList.add(League("No leagues found", "No leagues found","",""))
-                        }
-                    }
+                    response.data?.let { leaguesadapter.differ.submitList(it.leagues) }
                 }
                 is com.fimbleenterprises.sportsdb.util.Resource.Error -> {
                     hideProgressBar()
-                    response.message?.let {
+                    response.message?.let { it: String ->
                         Toast.makeText(activity, "An error occurred : $it", Toast.LENGTH_LONG)
                             .show()
                     }
@@ -125,15 +117,17 @@ class FindLeaguesFragment : Fragment() {
     }
 
     /**
-     * Queries the API for all teams in the currently selected league.
+     * Uses .contains on a few string properties of the League object and returns a list of matches.
+     * We just rebind the adapter's differ bucket with this list instead of the full leagues list.
      */
     private fun filterLeagues(query:String) {
 
         viewmodel.filterAllLeagues(query)
-        viewmodel.filteredLeagues.observe(viewLifecycleOwner) { response ->
+        viewmodel.filteredLeagues.observe(viewLifecycleOwner) { response: List<League> ->
             leaguesadapter.differ.submitList(response)
         }
 
+        // Add a boring event to Firebase analytics
         (activity as MainActivity).myAnalytics.logSearchedForLeagueEvent(query)
     }
 

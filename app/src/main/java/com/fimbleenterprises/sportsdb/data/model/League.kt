@@ -7,9 +7,9 @@ data class League(
     @SerializedName("idLeague")
     val idLeague: String,
     @SerializedName("strLeague")
-    val strLeague: String,
+    val strLeague: String?,
     @SerializedName("strLeagueAlternate")
-    val strLeagueAlternate: String,
+    val strLeagueAlternate: String?,
     @SerializedName("strSport")
-    val strSport: String
+    val strSport: String?
 )

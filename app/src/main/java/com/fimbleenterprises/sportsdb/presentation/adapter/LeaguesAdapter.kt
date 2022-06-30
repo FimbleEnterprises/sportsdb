@@ -66,7 +66,7 @@ class LeaguesAdapter :RecyclerView.Adapter<LeaguesAdapter.LeaguesViewHolder>() {
     private var onItemClickListener: ((League)->Unit)? = null
     private var onItemLongClickListener: ((League)->Unit)? = null
 
-    /* Sets the onItemClickListener that magically returns an Team object as "it".
+    /* Sets the onItemClickListener that magically returns a Team object as "it".
     Still no understand!  Caller will implement it as such:
         adapter.setOnItemClickListener {
             // it == Team

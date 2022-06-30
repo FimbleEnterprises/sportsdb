@@ -31,4 +31,9 @@
     <string name="no_thankyou">No problem!</string>
     <string name="you_have_no_teams_followed">You are not following any teams</string>
     <string name="choose_league">Choose a league</string>
+    <string name="no_teams_found">No teams found</string>
+    <string name="menu_item_purchase_pro">Purchase pro version</string>
+    <string name="menu_item_privacy_policy">Privacy Policy</string>
+    <string name="yes">Yup</string>
+    <string name="no">No thanks</string>
 </resources>

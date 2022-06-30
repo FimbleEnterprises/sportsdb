@@ -1,12 +1,23 @@
+@file:Suppress("unused")
+
 package com.fimbleenterprises.sportsdb.presentation.viewmodel
 
+import android.app.AlertDialog
 import android.app.Application
+import android.app.Dialog
+import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
+import androidx.databinding.ObservableBoolean
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.*
 import com.fimbleenterprises.sportsdb.util.FimTown
 import com.fimbleenterprises.sportsdb.util.Resource
 import com.fimbleenterprises.sportsdb.domain.usecase.*
 import com.fimbleenterprises.sportsdb.MyApp
+import com.fimbleenterprises.sportsdb.MyBillingWrapper
+import com.fimbleenterprises.sportsdb.R
 import com.fimbleenterprises.sportsdb.data.model.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -22,7 +33,8 @@ class SportsdbViewModel(
     private val deleteSavedTeamsUseCase: DeleteSavedTeamsUseCase,
     private val getLastFiveEventsFromAPIUseCase: GetLastFiveEventsFromAPIUseCase,
     private val searchTeamToFollowUseCase: SearchTeamToFollowUseCase,
-    private val getLeaguesFromAPIUseCase: GetLeaguesFromAPIUseCase
+    private val getLeaguesFromAPIUseCase: GetLeaguesFromAPIUseCase,
+    private val billingWrapper: MyBillingWrapper
 ) : AndroidViewModel(app) {
 
     val filteredLeagues: MutableLiveData<List<League>> = MutableLiveData()
@@ -35,8 +47,7 @@ class SportsdbViewModel(
     val lastFiveEvents: MutableLiveData<Resource<GameResultsApiResponse>> = MutableLiveData()
     private val mySavedTeamId: MutableLiveData<Long> = MutableLiveData()
     val showsummariesinboxscore: MutableLiveData<Boolean> = MutableLiveData()
-
-
+    val userIsPro: ObservableBoolean = ObservableBoolean(false)
 
     /**
      * Gets all teams in a league using Retrofit.
@@ -86,9 +97,9 @@ class SportsdbViewModel(
         val filteredList : ArrayList<League> = ArrayList()
         existingList?.forEach {
             if (
-                (it.strLeague.lowercase().contains(query.lowercase())) ||
+                (!it.strLeague.isNullOrEmpty() && it.strLeague.lowercase().contains(query.lowercase())) ||
                 (!it.strLeagueAlternate.isNullOrEmpty() && it.strLeagueAlternate.lowercase().contains(query.lowercase())) ||
-                (it.strSport.lowercase().contains(query.lowercase()))
+                (!it.strSport.isNullOrEmpty() && it.strSport.lowercase().contains(query.lowercase()))
             ) {
                 filteredList.add(it)
             }
@@ -131,7 +142,6 @@ class SportsdbViewModel(
         }catch (e:Exception){
             scheduledEvents.postValue(Resource.Error(e.message.toString()))
         }
-
     }
 
     /**
@@ -201,21 +211,161 @@ class SportsdbViewModel(
     }
 
     /**
-     * Queries Google's in-app purchases to see if user has purchased pro version.  Observe the
-     * mutable live data var: userHasPurchasedPro for the result.
+     * Gives the user the ability to purchase the pro version.
      */
-    fun queryUserPurchasedPro() : Boolean {
+    fun showOptionToBuyPro(team:SportsTeam, childFragmentManager: FragmentManager) {
+        val bundle = Bundle()
+        bundle.putSerializable("team", team)
+        PurchaseConfirmationDialogFragment(object : OnPurchaseDecisionListener {
+            // We can add this additional team to the followed teams
+            override fun purchased() {
+                MyApp.AppPreferences.isPro = true
+                userIsPro.set(MyApp.AppPreferences.isPro)
+                followTeam(team)
+            }
+
+            // We can only replace the current followed team with this selected team.
+            override fun declined() {
+                unFollowAllTeams()
+                followTeam(team)
+                MyApp.AppPreferences.isPro = false
+                userIsPro.set(MyApp.AppPreferences.isPro)
+                childFragmentManager.getFragment(bundle, PURCHASE_DIALOG)?.onDestroy()
+            }
+        }).show(childFragmentManager, PURCHASE_DIALOG)
+    }
+
+    /**
+     * Gives the user the ability to purchase the pro version.
+     */
+    fun showOptionToBuyPro(childFragmentManager: FragmentManager) {
+        PurchaseConfirmationDialogFragment(object : OnPurchaseDecisionListener {
+            override fun purchased() {
+                MyApp.AppPreferences.isPro = true
+                userIsPro.set(MyApp.AppPreferences.isPro)
+            }
+            override fun declined() { }
+        }).show(childFragmentManager, null)
+    }
+
+    interface OnPurchaseDecisionListener {
+        fun purchased()
+        fun declined()
+    }
+
+    /**
+     * Basic dialog fragment to prompt the user to give us money and happiness for all parties!  I
+     * mean, it would be dumb because this app is kinda dumb but a fool and his money are easily
+     * parted!
+     */
+    class PurchaseConfirmationDialogFragment
+    constructor(
+        private val decisionListener: OnPurchaseDecisionListener
+    ) : DialogFragment() {
+
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
+            AlertDialog.Builder(requireContext())
+                .setMessage(getString(R.string.purchase_pro_version))
+                .setPositiveButton(getString(R.string.yes)) { _,_ ->
+                    Toast.makeText(context, getString(R.string.thankyou), Toast.LENGTH_SHORT).show()
+                    decisionListener.purchased()
+                    Log.i(TAG,"-= PURCHASE CONFIRMED! =-")
+                    this.dismiss()
+                }
+                .setNegativeButton(getString(R.string.no)) {_,_ ->
+                    Toast.makeText(context, getString(R.string.no_thankyou), Toast.LENGTH_SHORT).show()
+                    decisionListener.declined()
+                    Log.i(TAG, "-= PURCHASE DECLINED =-")
+                    this.dismiss()
+                }
+                .create()
+
+        companion object {
+            private const val TAG = "FIMTOWN|PurchaseConfirmationDialogFragment"
+        }
+
+        init {
+            Log.i(TAG, "Initialized:PurchaseConfirmationDialogFragment")
+        }
+
+    }
+
+    /**
+     * Stand-in until comprehensive in-app purchasing is properly implemented
+     */
+    internal fun queryUserPurchasedPro(): Boolean {
         return MyApp.AppPreferences.isPro
     }
 
+    /**
+     * NOT IMPLEMENTED
+     * Production would query Google's in-app purchases to see if user has purchased pro version.
+     * Observe the mutable live data var: userHasPurchasedPro for the result or leverage a callback.
+     */
+    /*fun queryUserPurchasedPro(listener: UserIsProQueryListener)  {
+
+        billingWrapper.queryProducts(object : MyBillingWrapper.OnQueryProductsListener {
+            override fun onSuccess(products: List<SkuDetails>) {
+                if (!products.isNullOrEmpty()) {
+                    if (products[0].sku == PRO_SKU) {
+                        userIsPro = true
+                        listener.userIsPro()
+                    }
+                } else {
+                    userIsPro = false
+                    listener.userIsNotPro()
+                }
+            }
+
+            override fun onFailure(error: MyBillingWrapper.Error) {
+                TODO("Not yet implemented")
+            }
+        })
+    }*/
+
+    /**
+     * NOT IMPLEMENTED
+     * Production would query Google's in-app purchases to see if user has purchased pro version.
+     * Observe the live data var: userHasPurchasedPro for the result.
+     */
+    /*internal fun queryUserPurchasedPro()  {
+
+        Log.i(TAG, "-=SportsdbViewModel:queryUserPurchasedProForReal| Querying Google... =-")
+        queryUserPurchasedPro(object : UserIsProQueryListener {
+            override fun userIsPro() {
+                Log.i(TAG, "-=SportsdbViewModel:userIsPro =-")
+            }
+
+            override fun userIsNotPro() {
+                Log.i(TAG, "-=SportsdbViewModel:userIsNotPro =-")
+            }
+        })
+    }*/
+
+    /**
+     * NOT IMPLEMENTED
+     * Might be needed for proper in-app purchasing.
+     */
+    /*interface UserIsProQueryListener {
+        fun userIsPro()
+        fun userIsNotPro()
+    }*/
+
     companion object {
         private const val TAG = "FIMTOWN|SportsdbViewModel"
+        const val PRO_SKU = "sportsdb_pro_1"
+        const val PURCHASE_DIALOG = "PURCHASE_DIALOG"
     }
 
     init {
         Log.i(TAG, "Initialized:SportsdbViewModel")
         // Set the initial value from prefs
         showsummariesinboxscore.postValue(MyApp.AppPreferences.showSummariesInBoxscore)
+
+        userIsPro.set(MyApp.AppPreferences.isPro)
+        // Query Google's servers to see if user has purchased our "pro" version of the app.
+        // LiveData will be updated and can be queried afterwards.
+        queryUserPurchasedPro()
     }
 
 }

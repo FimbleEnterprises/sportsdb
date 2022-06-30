@@ -8,6 +8,7 @@ import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.fimbleenterprises.sportsdb.databinding.FragmentListTeamsBinding
 import com.fimbleenterprises.sportsdb.presentation.adapter.TeamsAdapter
 import com.fimbleenterprises.sportsdb.presentation.viewmodel.SportsdbViewModel
@@ -104,9 +105,11 @@ class MyTeamsFragment : Fragment() {
         binding.rvNews.apply {
             // Since we share this adapter with the FindTeams fragment it can sometimes be populated
             // with teams received from the API when we arrive.  That makes for a janky switch when
-            // the adapter is re-populated with our db results.
+            // the adapter is re-populated with our db results.  So we clear it first.
             teamsadapter.differ.submitList(null)
-            adapter = teamsadapter
+            teamsadapter.stateRestorationPolicy =
+                RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+            adapter = this@MyTeamsFragment.teamsadapter
             layoutManager = LinearLayoutManager(activity)
         }
 
@@ -115,7 +118,9 @@ class MyTeamsFragment : Fragment() {
          */
         teamsadapter.setOnItemClickListener {
             MyApp.AppPreferences.currentTeam = it
-            findNavController().navigate(R.id.action_goto_view_scores)
+            val bundle = Bundle()
+            bundle.putSerializable("team", it)
+            findNavController().navigate(R.id.action_goto_view_scores, bundle)
         }
 
         /**
@@ -157,10 +162,13 @@ class MyTeamsFragment : Fragment() {
     }
 
     private fun getMyFollowedTeams() {
-        viewmodel.getFollowedTeams().observe(viewLifecycleOwner) {
+        viewmodel.getFollowedTeams().observe(viewLifecycleOwner) { it ->
             if (it != null) {
                 Log.i(TAG, "getMyTeams: Retrieved ${it.size} followed teams")
-                teamsadapter.differ.submitList(it)
+                with(teamsadapter) { differ.submitList(it) }
+                View.GONE.also { binding.txtNoTeams.visibility = it }
+            } else {
+                View.GONE.also { binding.txtNoTeams.visibility = it }
             }
         }
     }

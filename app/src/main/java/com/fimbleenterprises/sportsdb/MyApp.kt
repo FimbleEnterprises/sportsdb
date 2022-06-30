@@ -4,10 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.BillingClientStateListener
-import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.PurchasesUpdatedListener
 import com.fimbleenterprises.sportsdb.data.model.SportsTeam
 import com.google.gson.Gson
 import dagger.hilt.android.HiltAndroidApp
@@ -38,10 +34,10 @@ class MyApp : Application() {
         private lateinit var prefs: SharedPreferences
 
         // list of preferences
-        private val MY_TEAM = "PREF_TEAM"
-        private val SHOW_SUMMARIES = "PREF_SHOWSUMMARIES"
-        private val PREF_SELECTED_LEAGUE = "PREF_SELECTED_LEAGUE"
-        private val PREF_IS_PRO = "PREF_IS_PRO"
+        private const val MY_TEAM = "PREF_TEAM"
+        private const val SHOW_SUMMARIES = "PREF_SUMMARIES"
+        private const val PREF_SELECTED_LEAGUE = "PREF_SELECTED_LEAGUE"
+        private const val PREF_IS_PRO = "PREF_IS_PRO"
 
         fun init(context: Context) {
             prefs = context.getSharedPreferences(NAME, MODE)
@@ -52,8 +48,8 @@ class MyApp : Application() {
          */
         var currentTeam : SportsTeam?
         get() = Gson().fromJson(prefs.getString(MY_TEAM, null), SportsTeam::class.java)
-        set(value: SportsTeam?) {
-            prefs.edit().putString(MY_TEAM, Gson().toJson(value)).commit()
+        set(value) {
+            prefs.edit().putString(MY_TEAM, Gson().toJson(value)).apply()
         }
 
         /**
@@ -69,7 +65,7 @@ class MyApp : Application() {
         var currentLeague: String?
             get() = prefs.getString(PREF_SELECTED_LEAGUE, null)
             set(value) {
-                prefs.edit().putString(PREF_SELECTED_LEAGUE, value).commit()
+                prefs.edit().putString(PREF_SELECTED_LEAGUE, value).apply()
             }
 
 
@@ -78,8 +74,8 @@ class MyApp : Application() {
          */
         var isPro: Boolean
             get() = prefs.getBoolean(PREF_IS_PRO, false)
-            set(value: Boolean) {
-                prefs.edit().putBoolean(PREF_IS_PRO, value).commit()
+            set(value) {
+                prefs.edit().putBoolean(PREF_IS_PRO, value).apply()
             }
 
     }

@@ -64,7 +64,7 @@ class SportsdbAPIServiceTest {
             enqueueMockResponse("teamsresponse.json")
             val responseBody = service.getAllTeams("mlb").body()
             val teamsList = responseBody!!.sportsTeams
-            val firstteam = teamsList[0]
+            val firstteam = teamsList!![0]
             assertThat(firstteam.strLeague).isNotEmpty()
             assertThat(firstteam.strLeague).isEqualTo("MLB")
             assertThat(teamsList.size).isGreaterThan(0)

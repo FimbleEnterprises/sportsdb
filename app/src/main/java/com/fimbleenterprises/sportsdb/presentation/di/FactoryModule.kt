@@ -55,7 +55,7 @@ class FactoryModule {
             searchTeamToFollowUseCase,
             getLeaguesFromAPIUseCase,
             myMyBillingInstance
-        );
+        )
     }
 
     companion object {

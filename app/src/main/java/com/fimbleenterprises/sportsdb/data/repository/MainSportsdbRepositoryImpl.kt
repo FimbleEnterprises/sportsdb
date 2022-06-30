@@ -43,20 +43,8 @@ class MainSportsdbRepositoryImpl(
         return sportsdbLocalDataSource.getSavedTeamsFromDB()
     }
 
-    override fun getSavedTeam(idTeam: String): Flow<SportsTeam> {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun insertTeams(sportsTeams: List<SportsTeam>): List<Long> {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun insertTeam(sportsTeam: SportsTeam): Long {
         return sportsdbLocalDataSource.saveTeamToDB(sportsTeam)
-    }
-
-    override fun getMySavedTeam(): Flow<SportsTeam> {
-        TODO("Not yet implemented")
     }
 
     override fun getFollowedTeamsFromDB(): Flow<List<SportsTeam>> {
