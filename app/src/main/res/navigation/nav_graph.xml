@@ -27,6 +27,7 @@
         app:popUpToInclusive="true">
         <argument
             android:name="team"
+
             app:argType="com.fimbleenterprises.sportsdb.data.model.SportsTeam" />
     </action>
 
@@ -78,7 +79,9 @@
         </action>
         <argument
             android:name="team"
-            app:argType="com.fimbleenterprises.sportsdb.data.model.SportsTeam" />
+            app:argType="com.fimbleenterprises.sportsdb.data.model.SportsTeam"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
     <fragment
         android:id="@+id/viewHighlightsFragment"

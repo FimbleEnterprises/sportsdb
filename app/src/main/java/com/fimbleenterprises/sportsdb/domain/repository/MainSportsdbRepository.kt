@@ -15,7 +15,10 @@ interface MainSportsdbRepository{
 
       // DB ops
       fun getAllSavedTeams(): Flow<List<SportsTeam>>
+      fun getSavedTeam(idTeam:String) : Flow<SportsTeam>
+      suspend fun insertTeams(sportsTeams : List<SportsTeam>): List<Long>
       suspend fun insertTeam(sportsTeam: SportsTeam): Long
+      fun getMySavedTeam():Flow<SportsTeam>
       fun getFollowedTeamsFromDB(): Flow<List<SportsTeam>>
       suspend fun updateTeam(sportsTeam: SportsTeam):Int
       suspend fun deleteSavedTeams():Int

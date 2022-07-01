@@ -36,4 +36,6 @@
     <string name="menu_item_privacy_policy">Privacy Policy</string>
     <string name="yes">Yup</string>
     <string name="no">No thanks</string>
+    <string name="no_team_selected">No team selected!</string>
+    <string name="unfollow_title">Are you sure</string>
 </resources>

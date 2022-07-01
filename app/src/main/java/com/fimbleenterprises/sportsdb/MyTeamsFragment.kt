@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.fimbleenterprises.sportsdb.data.model.SportsTeam
 import com.fimbleenterprises.sportsdb.databinding.FragmentListTeamsBinding
 import com.fimbleenterprises.sportsdb.presentation.adapter.TeamsAdapter
 import com.fimbleenterprises.sportsdb.presentation.viewmodel.SportsdbViewModel
@@ -126,25 +127,25 @@ class MyTeamsFragment : Fragment() {
         /**
          * On long click we offer the opportunity to un-follow a team
          */
-        teamsadapter.setOnItemLongClickListener {
-            val selectedTeam = it
+        teamsadapter.setOnItemLongClickListener { selectedTeam: SportsTeam ->
+
             // build alert dialog
             val dialogBuilder = AlertDialog.Builder(activity)
-            dialogBuilder.setMessage(getString(R.string.dialog_unfollow_team))
+            dialogBuilder
                 .setCancelable(false)
+                .setTitle(getString(R.string.dialog_unfollow_team))
                 .setPositiveButton(":Yes") { _, _ ->
-                    viewmodel.unFollowTeam(it)
+                    viewmodel.unFollowTeam(selectedTeam)
                     viewmodel.deletedTeamCount.observe(viewLifecycleOwner) {
-                        Snackbar.make(
+                       val snackbar = Snackbar.make(
                             binding.rvNews,
                             getString(R.string.team_unfollowed),
-                            Snackbar.LENGTH_LONG
-                        )
-                            .setAction("Undo") {
+                           8000
+                        ).setAction("Undo") {
                                 // Undo should be as easy as re-following the team again.
                                 viewmodel.followTeam(selectedTeam)
-                            }
-                            .show()
+                        }
+                        snackbar.show()
                     }
                 }
                 // negative button text and action
@@ -152,11 +153,7 @@ class MyTeamsFragment : Fragment() {
                     dialog.cancel()
                 }
 
-            // create dialog box
             val alert = dialogBuilder.create()
-            // set title for alert dialog box
-            alert.setTitle("AlertDialogExample")
-            // show alert dialog
             alert.show()
         }
     }

@@ -44,13 +44,14 @@ class MainActivity : AppCompatActivity() {
     lateinit var myMyBillingWrapper: MyBillingWrapper
     // endregion
 
+    // region Activity-scoped vars
     lateinit var viewModel: SportsdbViewModel
     private lateinit var binding: ActivityMainBinding
     private lateinit var navHostFragment: NavHostFragment
     private lateinit var navController: NavController
+    // endregion
 
-
-
+    // region Events
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -104,7 +105,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        menu?.findItem(R.id.action_purchase_pro)?.isVisible = viewModel.userIsPro.get()
+        // Hide get pro menu option if user is already one
+        menu?.findItem(R.id.action_purchase_pro)?.isVisible = !viewModel.userIsPro.get() == true
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -121,6 +123,7 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+    // endregion
 
     companion object {
         private const val TAG = "FIMTOWN|MainActivity"

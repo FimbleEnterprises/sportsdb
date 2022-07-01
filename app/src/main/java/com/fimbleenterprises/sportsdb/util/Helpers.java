@@ -28,16 +28,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.location.Location;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.PowerManager;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.telephony.SmsManager;
@@ -105,8 +101,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+
+@SuppressWarnings("unused")
 public class Helpers {
 
     public static class Application {
@@ -140,13 +141,13 @@ public class Helpers {
 
         }
 
-        public static void startActivity(Context context, Class activityClass) {
-            Intent intent = new Intent(context, activityClass);
+        public static void startActivity(Context context, Object activityClass) {
+            Intent intent = new Intent(context, activityClass.getClass());
             context.startActivity(intent);
         }
 
-        public static void startActivityForResult(Activity sourceActivity, Class destActivityClass, int requestCode) {
-            sourceActivity.startActivityForResult(new Intent(sourceActivity, destActivityClass), requestCode);
+        public static void startActivityForResult(Activity sourceActivity, Object destActivityClass, int requestCode) {
+            sourceActivity.startActivityForResult(new Intent(sourceActivity, destActivityClass.getClass()), requestCode);
         }
 
         public static void restartApplication(Context c) {
@@ -169,7 +170,7 @@ public class Helpers {
                             int mPendingIntentId = 223344;
                             PendingIntent mPendingIntent = PendingIntent
                                     .getActivity(c, mPendingIntentId, mStartActivity,
-                                            PendingIntent.FLAG_CANCEL_CURRENT);
+                                            PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                             AlarmManager mgr = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
                             mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
                             //kill the application
@@ -204,7 +205,7 @@ public class Helpers {
         /**
          * Attempts to focus and show the keyboard for an edittext.
          * @param editText The edittext to focus.
-         * @param context
+         * @param context A valid context
          */
         public static void showKeyboard(EditText editText, Context context) {
             try {
@@ -394,17 +395,15 @@ public class Helpers {
 
 
         public void create(String title, String text, boolean showProgress){
-            if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
-                ((NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(
-                        new NotificationChannel(NOTIFICATION_CHANNEL,NOTIFICATION_SERVICE,NotificationManager.IMPORTANCE_HIGH));
-            }
+            ((NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(
+                    new NotificationChannel(NOTIFICATION_CHANNEL,NOTIFICATION_SERVICE,NotificationManager.IMPORTANCE_HIGH));
 
             Intent newIntent = new Intent();
 
             // The PendingIntent to launch our activity if the user selects
             // this notification
             PendingIntent contentIntent = PendingIntent.getActivity(context,
-                    0, newIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    0, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
             NotificationCompat.BigTextStyle style = new NotificationCompat.BigTextStyle()
                     .bigText(text);
@@ -424,12 +423,7 @@ public class Helpers {
 
         public void setAutoCancel(int delayInMs) {
             Handler h = new Handler();
-            long delayInMilliseconds = delayInMs;
-            h.postDelayed(new Runnable() {
-                public void run() {
-                    notificationManager.cancel(START_ID);
-                }
-            }, delayInMilliseconds);
+            h.postDelayed(() -> notificationManager.cancel(START_ID), delayInMs);
         }
 
         public void cancel() {
@@ -478,8 +472,7 @@ public class Helpers {
         public static DateTime parseCrmDateTime(String datetime) {
             try {
                 DateTimeFormatter format = DateTimeFormat.forPattern("M/d/yyyy h:mm tt");
-                DateTime result = DateTimeFormat.forPattern("M/d/yyyy h:mm tt").parseDateTime(datetime);
-                return result;
+                return DateTimeFormat.forPattern("M/d/yyyy h:mm tt").parseDateTime(datetime);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -494,8 +487,7 @@ public class Helpers {
         public static DateTime parseCrmDateOnly(String date) {
             try {
                 DateTimeFormatter format = DateTimeFormat.forPattern("M/d/yyyy");
-                DateTime result = DateTimeFormat.forPattern("M/d/yyyy").parseDateTime(date);
-                return result;
+                return DateTimeFormat.forPattern("M/d/yyyy").parseDateTime(date);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -505,8 +497,7 @@ public class Helpers {
         public static String toCrmDate(DateTime datetime) {
             try {
                 DateTimeFormatter format = DateTimeFormat.forPattern("M/d/yyyy");
-                String result = datetime.toString(format);
-                return result;
+                return datetime.toString(format);
             } catch (Exception e) {
                 e.printStackTrace();
                 return datetime.toLocalDateTime().toString();
@@ -517,8 +508,7 @@ public class Helpers {
          * Converts the supplied milisecond value into minutes
          **/
         public static int convertMilisToMinutes(double milis) {
-            int result = (int) milis / (1000 * 60);
-            return result;
+            return (int) milis / (1000 * 60);
         }
 
         /**
@@ -528,9 +518,15 @@ public class Helpers {
 
             Calendar c = Calendar.getInstance();
             c.setMinimalDaysInFirstWeek(7);//anything more than 1 will work in this year
-            DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
             try {
-                c.setTime(sdf.parse(date.getDayOfMonth() + "/" + date.getMonthOfYear() + "/" + date.getYearOfCentury()));
+                c.setTime(Objects.requireNonNull(
+                        sdf.parse(
+                                date.getDayOfMonth()
+                                + "/"
+                                + date.getMonthOfYear()
+                                + "/"
+                                + date.getYearOfCentury())));
             } catch (ParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -546,9 +542,13 @@ public class Helpers {
 
             Calendar c = Calendar.getInstance();
             c.setMinimalDaysInFirstWeek(2);//anything more than 1 will work in this year
-            DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
             try {
-                c.setTime(sdf.parse(date.getDayOfMonth() + "/" + date.getMonthOfYear() + "/" + date.getYearOfCentury()));
+                c.setTime(Objects.requireNonNull(sdf.parse(
+                        date.getDayOfMonth()
+                                + "/"
+                                + date.getMonthOfYear() + "/"
+                                + date.getYearOfCentury())));
             } catch (ParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -564,9 +564,10 @@ public class Helpers {
 
             Calendar c = Calendar.getInstance();
             c.setMinimalDaysInFirstWeek(7);//anything more than 1 will work in this year
-            DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
             try {
-                c.setTime(sdf.parse(date.getDayOfMonth() + "/" + date.getMonthOfYear() + "/" + date.getYearOfCentury()));
+                c.setTime(Objects.requireNonNull(sdf.parse(date.getDayOfMonth() + "/" + date
+                        .getMonthOfYear() + "/" + date.getYearOfCentury())));
             } catch (ParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -626,7 +627,7 @@ public class Helpers {
                     break;
             }
 
-            if (abbreviateMonthName == true) {
+            if (abbreviateMonthName) {
                 monthString = monthString.substring(0, 3);
             }
 
@@ -646,8 +647,7 @@ public class Helpers {
         public static DateTime parseDateTime(String strDate) {
             DateTimeFormatter df = DateTimeFormat.forPattern("M/d/yyyy h:mm a");
             try {
-                DateTime dateTime = df.parseDateTime(strDate);
-                return dateTime;
+                return df.parseDateTime(strDate);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -657,8 +657,7 @@ public class Helpers {
         public static DateTime parseDate(String strDate) {
             DateTimeFormatter df = DateTimeFormat.forPattern("M/d/yyyy");
             try {
-                DateTime dateTime = df.parseDateTime(strDate);
-                return dateTime;
+                return df.parseDateTime(strDate);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -792,7 +791,7 @@ public class Helpers {
         // This method returns today's date as a short date string
         public static String getTodaysDateAsString() {
             Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+            SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
             String formattedDate = df.format(c.getTime());
 
             Log.d("GetTodaysDate", "Today's date is: '" + formattedDate + "'");
@@ -805,7 +804,7 @@ public class Helpers {
 
             // Get today as a Calendar
             Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+            SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
             // Subtract 1 day
             c.add(Calendar.DATE, -1);
             String formattedDate = df.format(c.getTime());
@@ -830,7 +829,7 @@ public class Helpers {
             cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
 
             // instantiate a formatter
-            SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+            SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
 
             // format the formal date
             String formattedDate = df.format(cal.getTime());
@@ -858,7 +857,7 @@ public class Helpers {
             cal.set(Calendar.DAY_OF_MONTH, 1);
 
             // instantiate a formatter
-            SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+            SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
 
             // format the formal date
             String formattedDate = df.format(cal.getTime());
@@ -872,8 +871,7 @@ public class Helpers {
 
         public static DateTime getFirstOfYear() {
 
-            DateTime date1 = new DateTime(DateTime.now().getYear(), 1, 1, 0,0);
-            return date1;
+            return new DateTime(DateTime.now().getYear(), 1, 1, 0,0);
         }
 
         public static DateTime getLastOfYear() {
@@ -882,21 +880,18 @@ public class Helpers {
 
         public static DateTime getFirstOfMonth() {
 
-            DateTime date1 = new DateTime(DateTime.now().getYear(), DateTime.now().getMonthOfYear(), 1, 0,0);
-            return date1;
+            return new DateTime(DateTime.now().getYear(), DateTime.now().getMonthOfYear(), 1, 0,0);
         }
 
         public static DateTime getLastOfMonth() {
 
-            DateTime date1 = new DateTime(DateTime.now().getYear(), DateTime.now().getMonthOfYear(),
+            return new DateTime(DateTime.now().getYear(), DateTime.now().getMonthOfYear(),
                     getDaysInMonth(DateTime.now().getYear(), DateTime.now().getMonthOfYear()), 0,0);
-            return date1;
         }
 
         public static DateTime getFirstOfYear(int year) {
 
-            DateTime date1 = new DateTime(DateTime.now().getYear(), 1, 1, 0,0);
-            return date1;
+            return new DateTime(DateTime.now().getYear(), 1, 1, 0,0);
         }
 
         public static DateTime getLastOfYear(int year) {
@@ -905,14 +900,12 @@ public class Helpers {
 
         public static DateTime getFirstOfMonth(int year, int month) {
 
-            DateTime date1 = new DateTime(year, month, 1, 0,0);
-            return date1;
+            return new DateTime(year, month, 1, 0,0);
         }
 
         public static DateTime getLastOfMonth(int year, int month) {
 
-            DateTime date1 = new DateTime(year, month, getDaysInMonth(year, month),0 ,0);
-            return date1;
+            return new DateTime(year, month, getDaysInMonth(year, month),0 ,0);
         }
 
         public static int getDaysInMonth(int year, int month) {
@@ -920,8 +913,7 @@ public class Helpers {
             cal.set(Calendar.MONTH, (month - 1));
             cal.set(Calendar.YEAR, year);
             cal.set(Calendar.DAY_OF_MONTH, 1);
-            int days = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-            return days; // <-- the result!
+            return cal.getActualMaximum(Calendar.DAY_OF_MONTH); // <-- the result!
         }
 
         /**
@@ -942,21 +934,21 @@ public class Helpers {
          * @return The calendar date as a pretty string (e.g. 12/23/2002)
          */
         public static String getLastDayOfMonthAsPrettyString(int month, int year) {
-            String result = "";
+            String result;
             // month = month + 1; // Zero based month index
             if (month == 0) {
                 month = 1;
             }
-            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
             Date convertedDate = null;
-            String dateString = String.valueOf(month) + "/1/" + String.valueOf(year);
+            String dateString = month + "/1/" + year;
             try {
                 convertedDate = dateFormat.parse(dateString);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
             Calendar c = Calendar.getInstance();
-            c.setTime(convertedDate);
+            c.setTime(Objects.requireNonNull(convertedDate));
             c.set(Calendar.DAY_OF_MONTH, c.getActualMaximum(Calendar.DAY_OF_MONTH));
             String d, m, y;
             d = String.valueOf(c.get(Calendar.DAY_OF_MONTH));
@@ -973,7 +965,7 @@ public class Helpers {
          * @return String value of the month number.
          */
         public static String getMonthName(int monthNumber) {
-            String prettyMonth = "";
+            String prettyMonth;
             switch (monthNumber) {
                 case 1:
                     prettyMonth ="January";
@@ -1022,8 +1014,7 @@ public class Helpers {
             String monthName = getMonthName(dateTime.getMonthOfYear()).trim();
             String year = Integer.toString(dateTime.getYear());
             String day = Integer.toString(dateTime.getDayOfMonth());
-            String result = monthName + " " + day + ", " + year;
-            return result;
+            return monthName + " " + day + ", " + year;
         }
 
         /**
@@ -1130,8 +1121,7 @@ public class Helpers {
             float d = a / 100f; // should rslt in a decimal between 0 and 1.  Higher is worse.
             float pct = 1f - d;
             float rslt = pct * 100;
-            int intRslt = (int) rslt;
-            return intRslt;
+            return (int) rslt;
         }
 
         /**
@@ -1151,10 +1141,7 @@ public class Helpers {
 
             DecimalFormat df = new DecimalFormat("#.#");
             df.setMaximumFractionDigits(decimalCount);
-            String result = "";
-
-            result = df.format((miles));
-
+            String result = df.format((miles));
             return Float.parseFloat(result);
         }
 
@@ -1190,9 +1177,7 @@ public class Helpers {
             double miles = (feet / 5280d);
 
             DecimalFormat df = new DecimalFormat("#.#");
-            String result = "";
-
-            result = df.format((miles));
+            String result = df.format((miles));
             if (appendToMakePretty) {
                 result += " miles";
             }
@@ -1237,7 +1222,7 @@ public class Helpers {
         public static String getSpeedInMph(float metersPerSecond, Context appContext, boolean appendLetters,
                                            boolean returnLotsOfDecimalPlaces) {
 
-            String rslt = "0";
+            String rslt;
 
             try {
                 double kmPerHour = ((metersPerSecond * 3600) / 1000);
@@ -1261,7 +1246,7 @@ public class Helpers {
                 rslt = mph;
 
                 // If the user wants to append the mph value to the returned string then we oblige here
-                if (appendLetters == true) {
+                if (appendLetters) {
                     rslt += " mph";
                 }
             } catch (NumberFormatException e) {
@@ -1295,7 +1280,7 @@ public class Helpers {
          **/
         public static String getSpeedInMph(float metersPerSecond, boolean appendLetters,
                                            int decimalPlaces) {
-            String rslt = "0";
+            String rslt;
 
             try {
                 double kmPerHour = ((metersPerSecond * 3600) / 1000);
@@ -1316,7 +1301,7 @@ public class Helpers {
                 rslt = mph;
 
                 // If the user wants to append the mph value to the returned string then we oblige here
-                if (appendLetters == true) {
+                if (appendLetters) {
                     rslt += " mph";
                 }
             } catch (NumberFormatException e) {
@@ -1329,9 +1314,6 @@ public class Helpers {
 
         /**
          * Returns the supplied float meters/sec into integer miles/hr
-         *
-         * @param metersPerSecond
-         * @return
          */
         public static int getSpeedInMph(float metersPerSecond) {
             double dblSpd = (metersPerSecond) / (1609.344 / 3600);
@@ -1457,9 +1439,9 @@ public class Helpers {
 
             // set pendingIntent for sent & delivered
             PendingIntent sentIntent = PendingIntent.getBroadcast(activity, 100, new
-                    Intent(SENT_ACTION), 0);
+                    Intent(SENT_ACTION), PendingIntent.FLAG_IMMUTABLE);
             PendingIntent deliveryIntent = PendingIntent.getBroadcast(activity, 200, new
-                    Intent(DELIVERY_ACTION), 0);
+                    Intent(DELIVERY_ACTION), PendingIntent.FLAG_IMMUTABLE);
 
             activity.registerReceiver(new BroadcastReceiver() {
                 @Override
@@ -1575,41 +1557,11 @@ public class Helpers {
 
         public static int getRandom(int low, int high) {
             Random r = new Random();
-            int i1 = r.nextInt((high + 1) - low) + low;
-            return i1;
+            return r.nextInt((high + 1) - low) + low;
         }
 
         public static boolean isEven(int number) {
-            if ((number % 2) == 0) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
-
-    public static class Sounds {
-
-        /**
-         * Returns a media player object that plays the system's notification sound.  Can be told to play immediately as well as whether or not to loop
-         **/
-        public static MediaPlayer playNotification(Context context, boolean playImmediately,
-                                                   boolean setLooping) throws IllegalArgumentException, SecurityException, IllegalStateException, IOException {
-            Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            MediaPlayer mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setDataSource(context, soundUri);
-            final AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager.getStreamVolume(AudioManager.STREAM_ALARM) != 0) {
-                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
-                mMediaPlayer.setLooping(setLooping);
-                mMediaPlayer.prepare();
-                if (playImmediately == true) {
-                    mMediaPlayer.start();
-                }
-                return mMediaPlayer;
-            } else {
-                return null;
-            }
+            return (number % 2) == 0;
         }
     }
 
@@ -1739,16 +1691,7 @@ public class Helpers {
          **/
         public static int deviceIsPluggedInto(Context context) {
             Intent intent = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-            int plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
-            return plugged;
-        }
-
-        /**
-         * Returns whether or not the screen is currently on or off
-         **/
-        public static boolean isScreenOn(Context context) {
-            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            return pm.isScreenOn();
+            return intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
         }
     }
 
@@ -1785,10 +1728,10 @@ public class Helpers {
                     }
                     br.close();
                     Log.d(TAG, "Finished reading - appending it to our log file...");
-                    tempFile.delete();
+                    boolean deleted = tempFile.delete();
 
                     FileWriter fw = new FileWriter(logFile, true);
-                    fw.write(text.toString() + "\n\n");
+                    fw.write(text + "\n\n");
                     fw.close();
                     Log.d(TAG, "Finished appending - creating googleEmail intent...");
                     Email.sendEmail(new String[]{"matt.weber@medistimusa.com"}, "LogCat stuff, yo.", "LogCat data " +
@@ -1894,9 +1837,6 @@ public class Helpers {
             switch (animationType) {
                 case WOBBLER:
                     resourceId = R.anim.wobbler;
-                    break;
-                case PULSE:
-                    resourceId = R.anim.pulse;
                     break;
                 case PULSE_HARDER:
                     resourceId = R.anim.pulse_harder;
@@ -2017,8 +1957,8 @@ public class Helpers {
             File file = new File(filePath);
             try (FileInputStream imageInFile = new FileInputStream(file)) {
                 // Reading a file from file system
-                byte fileData[] = new byte[(int) file.length()];
-                imageInFile.read(fileData);
+                byte[] fileData = new byte[(int) file.length()];
+                int value = imageInFile.read(fileData);
                 base64File = Base64.getEncoder().encodeToString(fileData);
             } catch (FileNotFoundException e) {
                 System.out.println("File not found" + e);
@@ -2035,57 +1975,54 @@ public class Helpers {
          */
         public static void base64Encode(final String filePath, final EncoderListener listener) {
 
-            final AsyncTask<String, String, String> task = new AsyncTask<String, String, String>() {
 
-                boolean wasSuccessful = false;
 
+            new MyAsyncTask() {
+                boolean wasSuccessful;
+                String base64File;
+                String error;
                 @Override
-                protected void onPreExecute() {
-                    super.onPreExecute();
+                public void onPreExecute() {
+                    // Runs (and finishes) before background task begins
                     Log.i(TAG, "onPreExecute Preparing to encode file at path: " + filePath);
                 }
 
                 @Override
-                protected String doInBackground(String... args) {
-                    String base64File = "";
+                public void doInBackground() {
+                    // Do background, non-UI work here. Can optionally call "reportProgress(object)"
+                    // to access UI thread.
                     File file = new File(filePath);
-                    try (FileInputStream imageInFile = new FileInputStream(file)) {
+                    try (FileInputStream targetfile = new FileInputStream(file)) {
                         // Reading a file from file system
-                        byte fileData[] = new byte[(int) file.length()];
-                        imageInFile.read(fileData);
+                        byte[] fileData = new byte[(int) file.length()];
+                        int bytes = targetfile.read(fileData);
                         base64File = Base64.getEncoder().encodeToString(fileData);
                         wasSuccessful = true;
-                        return base64File;
                     } catch (FileNotFoundException e) {
                         System.out.println("File not found" + e);
-                        return e.getLocalizedMessage();
+                        error = e.getLocalizedMessage();
                     } catch (IOException ioe) {
                         System.out.println("Exception while reading the file " + ioe);
-                        return ioe.getLocalizedMessage();
+                        error = ioe.getLocalizedMessage();
                     }
                 }
 
                 @Override
-                protected void onPostExecute(String val) {
-                    super.onPostExecute(val);
+                public void onProgress(Object msg) { }
+
+                @Override
+                public void onPostExecute() {
+                    // Code here will run on the main thread.
                     if (wasSuccessful) {
                         Log.i(TAG, "onPostExecute File was encoded!");
-                        listener.onSuccess(val);
+                        listener.onSuccess(base64File);
                     } else {
-                        Log.w(TAG, "onPostExecute: Failed to encode\nError: " + val);
-                        listener.onFailure(val);
+                        Log.w(TAG, "onPostExecute: Failed to encode\nError: " + error);
+                        listener.onFailure(error);
                     }
                 }
-            };
 
-            // The lack of this check has burned me before.  It's verbose and not always needed for reasons
-            // unknown but I'd leave it!
-            if(Build.VERSION.SDK_INT >= 11/*HONEYCOMB*/) {
-                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            } else {
-                task.execute();
-            }
-
+            }.execute();
 
         }
 
@@ -2116,22 +2053,25 @@ public class Helpers {
          * subdirectory of the application's temp directory
          * @param base64string The string to decode
          * @param listener A listener to monitor completion.
-         * @return A File file that by default exists in the app's temp directory.
          */
         public static void base64Decode(final String base64string, final File outputFile, final DecoderListener listener) {
 
-            AsyncTask<String, String, String> task = new AsyncTask<String, String, String>() {
+            new MyAsyncTask() {
 
-                boolean wasSuccessful = false;
+                boolean wasSuccessful;
+                String error;
+                File outputFile;
 
                 @Override
-                protected void onPreExecute() {
-                    super.onPreExecute();
+                public void onPreExecute() {
+                    // Runs (and finishes) before background task begins
                     Log.i(TAG, "onPreExecute Preparing to decode file at: " + outputFile.getPath());
                 }
 
                 @Override
-                protected String doInBackground(String... args) {
+                public void doInBackground() {
+                    // Do background, non-UI work here. Can optionally call "reportProgress(object)"
+                    // to access UI thread.
                     try {
                         Base64.Decoder dec = Base64.getDecoder();
                         byte[] strdec = dec.decode(base64string);
@@ -2139,34 +2079,29 @@ public class Helpers {
                         out.write(strdec);
                         out.close();
                         wasSuccessful = true;
-                        return outputFile.getPath();
                     } catch (Exception e) {
                         e.printStackTrace();
                         wasSuccessful = false;
-                        return e.getLocalizedMessage();
+                        error = e.getLocalizedMessage();
                     }
                 }
 
                 @Override
-                protected void onPostExecute(String val) {
-                    super.onPostExecute(val);
+                public void onProgress(Object msg) { }
+
+                @Override
+                public void onPostExecute() {
+                    // Code here will run on the main thread.
                     if (wasSuccessful) {
                         Log.i(TAG, "onPostExecute File was decoded!");
                         listener.onSuccess(outputFile);
                     } else {
-                        Log.w(TAG, "onPostExecute: File was NOT decoded\nError:" + val);
-                        listener.onFailure(val);
+                        Log.w(TAG, "onPostExecute: File was NOT decoded\nError:" + error);
+                        listener.onFailure(error);
                     }
                 }
-            };
 
-            // The lack of this check has burned me before.  It's verbose and not always needed for reasons
-            // unknown but I'd leave it!
-            if(Build.VERSION.SDK_INT >= 11/*HONEYCOMB*/) {
-                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            } else {
-                task.execute();
-            }
+            }.execute();
         }
 
         /**
@@ -2191,7 +2126,7 @@ public class Helpers {
 
             if(file.exists()) {
                 String mimeType = getMimetype(file);
-                String[] mimeTypeArray = new String[] { mimeType };
+                String[] mimeTypeArray = { mimeType };
 
                 intentShareFile.setType(mimeType);
                 Uri uri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID
@@ -2263,7 +2198,7 @@ public class Helpers {
          * @return A (always) lowercase string, which includes the period, representing the file's extension. (e.g. .png)
          */
         public static String getExtension(String fileName) {
-            String extension = "";
+            String extension;
 
             try {
                 int lastPeriod = fileName.lastIndexOf(".");
@@ -2287,8 +2222,7 @@ public class Helpers {
          */
         public static String parseFileNameFromPath(String path) {
             int fSlashIndex = path.lastIndexOf(File.separator);
-            String filename = path.substring(fSlashIndex + 1);
-            return filename;
+            return path.substring(fSlashIndex + 1);
         }
 
         // Checks for the existence of a file. Returns boolean.
@@ -2300,13 +2234,9 @@ public class Helpers {
             if (file.exists()) {
                 result = true;
                 Log.d("fileExists", "Found the file at: " + path + filename);
-                // b.setCompoundDrawablesWithIntrinsicBounds(null, PLAYLOGO , null,
-                // null);
-                result = true;
 
             } else {
                 Log.d("fileExists", "Couldn't find the file at: " + path + filename);
-                result = false;
             }
 
             return result;
@@ -2319,9 +2249,9 @@ public class Helpers {
             File path = new File(filePath);
             if (path.exists()) {
                 File[] files = path.listFiles();
-                for (int i = 0; i < files.length; i++) {
+                for (int i = 0; i < Objects.requireNonNull(files).length; i++) {
                     try {
-                        files[i].delete();
+                        boolean deleted = files[i].delete();
                         Log.d(TAG, "Deleted: " + files[i].getName());
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -2332,7 +2262,7 @@ public class Helpers {
         }// END deleteDirectory()
 
         public static String getMimetype(Context context, Uri uri) {
-            String mimeType = null;
+            String mimeType;
             if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
                 ContentResolver cr = context.getContentResolver();
                 mimeType = cr.getType(uri);
@@ -2359,39 +2289,7 @@ public class Helpers {
             }
         }
 
-        /*
-        public static void makeBackupDirectory() {
-
-            Context context = MyApp.getAppContext();
-
-            File dir = new File(getAppDirectory().getPath(), "Backups");
-
-            if (!dir.exists() || !dir.isDirectory()) {
-                Log.i(TAG, "makeBackupDirectory: " + dir.mkdirs());;
-            } else {
-                Log.i(TAG, "makeBackupDirectory: Backup directory exists");
-            }
-        }
-        */
-
-        // Commented out in v 1.85 - stopped working sometime in Android 11
-        /*public static File getAppTempDirectory() {
-            File tmp = new File(MyApp.getAppContext().getExternalFilesDir(null).toString() + File.separator
-                    + TEMP_DIR_NAME);
-            if (!tmp.exists()) {
-                tmp.mkdirs();
-            }
-            return tmp;
-        }*/
-
-        /*public static File getAppTempDirectory() {
-            File tmp = new File(getAppDirectory().getPath() + File.separator + File.separator + TEMP_DIR_NAME);
-            if (!tmp.exists()) {
-                tmp.mkdirs();
-            }
-            return tmp;
-        }*/
-
+        @SuppressWarnings("ResultOfMethodCallIgnored")
         public static class AppUpdates {
 
             /**
@@ -2419,9 +2317,11 @@ public class Helpers {
                 if (tmp.exists()) {
                     Log.i(TAG, "clear " + tmp.getAbsolutePath() + " exists!");
                     File[] contents = tmp.listFiles();
-                    for (int i = 0; i < contents.length; i++) {
-                        contents[i].delete();
-                        Log.i(TAG, "clear() | Deleted: " + contents[i].getName());
+                    if (contents != null && contents.length > 0) {
+                        for (File content : contents) {
+                            content.delete();
+                            Log.i(TAG, "clear() | Deleted: " + content.getName());
+                        }
                     }
                 } else {
                     Log.i(TAG, "clear() | " + tmp.getAbsolutePath() + " didn't exist.");
@@ -2451,11 +2351,12 @@ public class Helpers {
                 Log.i(TAG, "retrieve Looking for file (" + filename + ")");
                 File tmp = getDirectory();
                 File[] files = tmp.listFiles();
-                for (int i = 0; i < files.length; i++) {
-                    File file = files[i];
-                    if (file.getName().equals(filename)) {
-                        Log.i(TAG, file.getAbsolutePath() + " found!");
-                        return file;
+                if (files != null && files.length > 0) {
+                    for (File file : files) {
+                        if (file.getName().equals(filename)) {
+                            Log.i(TAG, file.getAbsolutePath() + " found!");
+                            return file;
+                        }
                     }
                 }
                 Log.i(TAG, "retrieve File not found in " + tmp.getAbsolutePath() + "!");
@@ -2474,13 +2375,10 @@ public class Helpers {
 
             /**
              * Returns all files that exist in the application's attachment temp directory.
-             * @return
              */
             public static File[] getFiles() {
                 File tmp = getDirectory();
-                File[] files = tmp.listFiles();
-                Log.i(TAG, "getFiles Found " + files.length + " files in the receipts temp directory.");
-                return files;
+                return tmp.listFiles();
             }
 
             /**
@@ -2496,7 +2394,7 @@ public class Helpers {
                 } else {
                     // Dir already exists - clear it out.
                     Log.w(TAG, "createStagingDir: | Staging directory already exists.");
-                    for (File f : stagingdir.listFiles()) {
+                    for (File f : Objects.requireNonNull(stagingdir.listFiles())) {
                         f.delete();
                         Log.w(TAG, "createStagingDir: | Found existing file: " + f.getName()
                                 + " in staging dir.  Deleted it.");
@@ -2507,14 +2405,223 @@ public class Helpers {
             }
         }
 
+        /**
+         * Matt Weber, 21/Mar/22
+         * Replacement for the old <a href="https://developer.android.com/reference/android/os/AsyncTask"> AsyncTask</a>
+         * class that got deprecated in API 30.  Has onPreExecute(), onDoInBackground(), onProgress() and
+         * onPostExecute() just like AsyncTask does/used to.<br/>
+         * <br/>
+         * <b>Example:</b>
+         * <pre>
+         * new MyAsyncTask() {
+         *
+         *     &#64Override
+         *     public void onPreExecute() {
+         *         // Runs (and finishes) before background task begins
+         *
+         *     }
+         *
+         *     &#64Override
+         *     public void doInBackground() {
+         *         // Do background, non-UI work here. Can optionally call "reportProgress(object)"
+         *         // to access UI thread.
+         *
+         *     }
+         *
+         *     &#64Override
+         *     public void onProgress(Object msg) {
+         *         // Code here will run on the main (UI) thread.
+         *
+         *     }
+         *
+         *     &#64Override
+         *     public void onPostExecute() {
+         *         // Code here will run on the main thread.
+         *
+         *     }
+         * }.execute();
+         * </pre><br/>
+         * <i>Inspired by:<br/>
+         * https://stackoverflow.com/a/68859991/2097893</br></i>
+         */
+        @SuppressWarnings("unused")
+        public static abstract class MyAsyncTask {
+            private final ExecutorService executors;
+            private final Handler handler;
+            private String bgThreadName;
+
+            public String getBgThreadName() {
+                return bgThreadName;
+            }
+
+            public void setBgThreadName(String bgThreadName) {
+                this.bgThreadName = bgThreadName;
+            }
+
+            /**
+             * Replacement for the old <a href="https://developer.android.com/reference/android/os/AsyncTask"> AsyncTask</a>
+             * class that got deprecated in API 30.  Has onPreExecute(), onDoInBackground(), onProgress() and
+             * onPostExecute() just like AsyncTask does/used to.<br/>
+             * <br/>
+             * <b>Example:</b>
+             * <pre>
+             * new MyAsyncTask() {
+             *
+             *     &#64Override
+             *     public void onPreExecute() {
+             *         // Runs (and finishes) before background task begins
+             *
+             *     }
+             *
+             *     &#64Override
+             *     public void doInBackground() {
+             *         // Do background, non-UI work here. Can optionally call "reportProgress(object)"
+             *         // to access UI thread.
+             *
+             *     }
+             *
+             *     &#64Override
+             *     public void onProgress(Object msg) {
+             *         // Code here will run on the main (UI) thread.
+             *
+             *     }
+             *
+             *     &#64Override
+             *     public void onPostExecute() {
+             *         // Code here will run on the main thread.
+             *
+             *     }
+             * }.execute();
+             * </pre><br/>
+             * <i>Inspired by:<br/>
+             * <a href="https://stackoverflow.com/a/68859991/2097893">https://stackoverflow.com/a/68859991/2097893</a></br></i>
+             */
+            public MyAsyncTask() {
+                // The executor can be called from any thread (the main in this case) but executes its
+                // code on a background thread.
+                this.executors = Executors.newSingleThreadExecutor();
+                // The handler posts all of its jobs on the main thread.
+                this.handler = new Handler(Looper.getMainLooper(), msg -> false);
+            }
+
+            /**
+             * Replacement for the old <a href="https://developer.android.com/reference/android/os/AsyncTask"> AsyncTask</a>
+             * class that got deprecated in API 30.  Has onPreExecute(), onDoInBackground(), onProgress() and
+             * onPostExecute() just like AsyncTask does/used to.<br/>
+             * <br/>
+             * <b>Example:</b>
+             * <pre>
+             * new MyAsyncTask() {
+             *
+             *     &#64Override
+             *     public void onPreExecute() {
+             *         // Runs (and finishes) before background task begins
+             *
+             *     }
+             *
+             *     &#64Override
+             *     public void doInBackground() {
+             *         // Do background, non-UI work here. Can optionally call "reportProgress(object)"
+             *         // to access UI thread.
+             *
+             *     }
+             *
+             *     &#64Override
+             *     public void onProgress(Object msg) {
+             *         // Code here will run on the main (UI) thread.
+             *
+             *     }
+             *
+             *     &#64Override
+             *     public void onPostExecute() {
+             *         // Code here will run on the main thread.
+             *
+             *     }
+             * }.execute();
+             * </pre><br/>
+             * <i>Inspired by:<br/>
+             * <a href="https://stackoverflow.com/a/68859991/2097893">https://stackoverflow.com/a/68859991/2097893</a></br></i>
+             */
+            public MyAsyncTask(String bgThreadName) {
+                // The executor can be called from any thread (the main in this case) but executes its
+                // code on a background thread.
+                this.executors = Executors.newSingleThreadExecutor();
+                // The handler posts all of its jobs on the main thread.
+                this.handler = new Handler(Looper.getMainLooper(), msg -> false);
+                this.bgThreadName = bgThreadName;
+            }
+
+            private void startBackground() {
+                // Still on main thread - code in this block will finish before it moves on to the
+                // background thread.
+                onPreExecute();
+
+                // Now we do the background stuff on a non-UI thread.
+                executors.execute(() -> {
+                    // Giving this thread a name if one was supplied.
+                    if (MyAsyncTask.this.bgThreadName != null) {
+                        Thread.currentThread().setName(MyAsyncTask.this.bgThreadName);
+                    }
+
+                    // Start doing the background work on a new thread.
+                    MyAsyncTask.this.doInBackground();
+
+                    // Now that the main work is done we call the onPostExecute method on the UI thread.
+                    // This is an anonymous class converted to a lambda and then to a method reference.
+                    // This still looks so foreign to me!  I hope one day I will read this comment and laugh.
+                    handler.post(MyAsyncTask.this::onPostExecute);
+                });
+            }
+
+            /**
+             * Uses the class' shared final handler to call <i>handler.post(new Runnable() -> run() { <b>your code</b> })</i>
+             * in order to get something executed on the main thread.
+             * @param msg The object you want passed to the caller's anonymous "onProgress()" method.
+             */
+            public void reportProgress(Object msg) {
+                // Using the handler created in the constructor we can post a new runnable on the UI thread.
+                handler.post(() -> onProgress(msg));
+            }
+
+            /**
+             * Starts the background task which in turn first executes all code in "onPreExecute()".
+             */
+            public void execute() {
+                startBackground();
+            }
+
+            /**
+             * Will return any object that was passed using "<code>reportProgress(object)</code> within the
+             * <code>doInBackground()</code>.
+             * @param progress Runs and returns the object passed using <code>reportProgress()</code> from doInBackground()
+             */
+            public abstract void onProgress(Object progress);
+
+            /**
+             * This code will be executed in toto before any code in <code>doInBackground()</code> is executed.
+             */
+            public abstract void onPreExecute();
+
+            /**
+             * Put code you want executed on a separate thread here.
+             */
+            public abstract void doInBackground();
+
+            /**
+             * This code will be executed upon completion of all code in <code>doInBackground()</code>
+             */
+            public abstract void onPostExecute();
+        }
+
+
         public interface EncoderListener {
-            public void onSuccess(String base64String);
-            public void onFailure(String error);
+            void onSuccess(String base64String);
+            void onFailure(String error);
         }
 
         public interface DecoderListener {
-            public void onSuccess(File decodedFile);
-            public void onFailure(String error);
+            void onSuccess(File decodedFile);
+            void onFailure(String error);
         }
     }
 
@@ -2528,9 +2635,7 @@ public class Helpers {
 
         @RequiresApi(api = Build.VERSION_CODES.O)
         public static byte[] decodeBase64(String encodedData) {
-            byte[] decodedBytes = Base64.getDecoder().decode(encodedData.getBytes());
-
-            return decodedBytes;
+            return Base64.getDecoder().decode(encodedData.getBytes());
         }
 
         @RequiresApi(api = Build.VERSION_CODES.O)
@@ -2542,8 +2647,7 @@ public class Helpers {
         @RequiresApi(api = Build.VERSION_CODES.O)
         public static String decodeBase64AsString(String encodedData) {
             byte[] decodedBytes = Base64.getDecoder().decode(encodedData.getBytes());
-            String b64 = new String(decodedBytes);
-            return b64;
+            return new String(decodedBytes);
         }
 
         @RequiresApi(api = Build.VERSION_CODES.O)
@@ -2635,9 +2739,7 @@ public class Helpers {
                                         && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                                     onRightSwipe();
                                 }
-                            } catch (Exception e) {
-
-                            }
+                            } catch (Exception ignored) { }
                             return true;
                         }
                     });
@@ -2647,12 +2749,12 @@ public class Helpers {
                     this.views.add(view);
 
                     for (View v : this.views) {
-                        v.setOnTouchListener(new View.OnTouchListener() {
-                            @Override
-                            public boolean onTouch(View view, MotionEvent motionEvent) {
-                                gestureDetector.onTouchEvent(motionEvent);
-                                return false;
+                        v.setOnTouchListener((view1, motionEvent) -> {
+                            gestureDetector.onTouchEvent(motionEvent);
+                            if (view1 != null) {
+                                view1.performClick();
                             }
+                            return false;
                         });
                     }
                 }
@@ -2689,7 +2791,7 @@ public class Helpers {
              * A simple container to house permissions that will be requested of the OS
              */
             public static class RequestContainer {
-                private ArrayList<String> permissions;
+                private final ArrayList<String> permissions;
 
                 public RequestContainer() {
                     permissions = new ArrayList<>();
@@ -2697,8 +2799,6 @@ public class Helpers {
 
                 /**
                  * Adds a permission string to the list if it isn't already present
-                 *
-                 * @param permissionType
                  */
                 public void add(PermissionType permissionType) {
                     if (!exists(permissionType)) {
@@ -2723,8 +2823,6 @@ public class Helpers {
 
                 /**
                  * Removes a permission from the list
-                 *
-                 * @param permissionType
                  */
                 public void remove(PermissionType permissionType) {
                     for (int i = 0; i < this.permissions.size(); i++) {
@@ -2972,8 +3070,6 @@ public class Helpers {
                             return BIND_CALL_REDIRECTION_SERVICE;
                         case BIND_CARRIER_MESSAGING_CLIENT_SERVICE:
                             return BIND_CARRIER_MESSAGING_CLIENT_SERVICE;
-                        case BIND_CARRIER_MESSAGING_SERVICE:
-                            return BIND_CARRIER_MESSAGING_SERVICE;
                         case BIND_CARRIER_SERVICES:
                             return BIND_CARRIER_SERVICES;
                         case BIND_CHOOSER_TARGET_SERVICE:
@@ -3080,8 +3176,6 @@ public class Helpers {
                             return GET_ACCOUNTS_PRIVILEGED;
                         case GET_PACKAGE_SIZE:
                             return GET_PACKAGE_SIZE;
-                        case GET_TASKS:
-                            return GET_TASKS;
                         case GLOBAL_SEARCH:
                             return GLOBAL_SEARCH;
                         case INSTALL_LOCATION_PROVIDER:
@@ -3120,20 +3214,12 @@ public class Helpers {
                             return NFC_TRANSACTION_EVENT;
                         case PACKAGE_USAGE_STATS:
                             return PACKAGE_USAGE_STATS;
-                        case PERSISTENT_ACTIVITY:
-                            return PERSISTENT_ACTIVITY;
-                        case PROCESS_OUTGOING_CALLS:
-                            return PROCESS_OUTGOING_CALLS;
                         case READ_CALENDAR:
                             return READ_CALENDAR;
                         case READ_CALL_LOG:
                             return READ_CALL_LOG;
                         case READ_CONTACTS:
                             return READ_CONTACTS;
-                        case READ_EXTERNAL_STORAGE:
-                            return READ_EXTERNAL_STORAGE;
-                        case READ_INPUT_STATE:
-                            return READ_INPUT_STATE;
                         case READ_LOGS:
                             return READ_LOGS;
                         case READ_PHONE_NUMBERS:
@@ -3174,8 +3260,6 @@ public class Helpers {
                             return REQUEST_INSTALL_PACKAGES;
                         case REQUEST_PASSWORD_COMPLEXITY:
                             return REQUEST_PASSWORD_COMPLEXITY;
-                        case RESTART_PACKAGES:
-                            return RESTART_PACKAGES;
                         case SEND_RESPOND_VIA_MESSAGE:
                             return SEND_RESPOND_VIA_MESSAGE;
                         case SEND_SMS:
@@ -3188,8 +3272,6 @@ public class Helpers {
                             return SET_ANIMATION_SCALE;
                         case SET_DEBUG_APP:
                             return SET_DEBUG_APP;
-                        case SET_PREFERRED_APPLICATIONS:
-                            return SET_PREFERRED_APPLICATIONS;
                         case SET_PROCESS_LIMIT:
                             return SET_PROCESS_LIMIT;
                         case SET_TIME:
@@ -3216,8 +3298,6 @@ public class Helpers {
                             return UPDATE_DEVICE_STATS;
                         case USE_BIOMETRIC:
                             return USE_BIOMETRIC;
-                        case USE_FINGERPRINT:
-                            return USE_FINGERPRINT;
                         case USE_FULL_SCREEN_INTENT:
                             return USE_FULL_SCREEN_INTENT;
                         case USE_SIP:
@@ -3353,14 +3433,6 @@ public class Helpers {
                 public static final String NFC = "android.permission.NFC";
                 public static final String NFC_TRANSACTION_EVENT = "android.permission.NFC_TRANSACTION_EVENT";
                 public static final String PACKAGE_USAGE_STATS = "android.permission.PACKAGE_USAGE_STATS";
-                /**
-                 * @deprecated
-                 */
-                @Deprecated
-                public static final String PERSISTENT_ACTIVITY = "android.permission.PERSISTENT_ACTIVITY";
-                /**
-                 * @deprecated
-                 */
                 @Deprecated
                 public static final String PROCESS_OUTGOING_CALLS = "android.permission.PROCESS_OUTGOING_CALLS";
                 public static final String READ_CALENDAR = "android.permission.READ_CALENDAR";
