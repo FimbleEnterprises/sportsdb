@@ -22,7 +22,7 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
     private lateinit var viewModel: SportsdbViewModel
     private lateinit var scheduledGamesAdapter: ScheduledGamesAdapter
     private lateinit var gameResultsAdapter: GameResultsAdapter
-    private lateinit var selectedTeam: SportsTeam
+    private var team: SportsTeam? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,12 +46,14 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
         gameResultsAdapter = (activity as MainActivity).gameResultsAdapter
 
         val args : ViewSelectedTeamsScoresFragmentArgs by navArgs()
-        selectedTeam = args.team
-        Log.i(TAG, "-=ViewSelectedTeamsScoresFragment:onViewCreated NavArgs passed" +
-                ": ${selectedTeam.strTeam} =-")
+        team = args.team
+        Log.i(TAG, "-=ViewSelectedTeamsScoresFragment:onViewCreated|Arg: ${team?.strTeam} =-")
 
-        findNavController().navigate(R.id.myTeamsFragment)
-        Toast.makeText(context, "No team selected!", Toast.LENGTH_SHORT).show()
+        if (team == null) {
+            findNavController().navigate(R.id.myTeamsFragment)
+            Toast.makeText(context, getString(R.string.no_team_selected), Toast.LENGTH_SHORT).show()
+            return
+        }
 
         initRecyclerViews()
         buildTeamDetails()
@@ -64,10 +66,10 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
         }
 
         (activity as MainActivity).apply {
-            this.title = selectedTeam.strTeam
+            this.title = team!!.strTeam
 
             // log analytics
-            myAnalytics.logViewedTeamScoresEvent(selectedTeam.strTeam)
+            myAnalytics.logViewedTeamScoresEvent(team!!.strTeam)
         }
 
     }
@@ -111,12 +113,12 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
 
         // Show team picture using Glide
         Glide.with(binding.imageView.context).
-        load(selectedTeam.strTeamLogo).into(binding.imageView)
+        load(team?.strTeamLogo).into(binding.imageView)
 
-        if (selectedTeam.strDescriptionEN == null) {
+        if (team!!.strDescriptionEN == null) {
             binding.txtAbout.text = getString(R.string.no_desc_found)
         } else {
-            binding.txtDescription.text = selectedTeam.strDescriptionEN
+            binding.txtDescription.text = team!!.strDescriptionEN
         }
         getNextFiveGames()
         getLastFiveGames()
@@ -157,7 +159,7 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
         // Clear list
         gameResultsAdapter.differ.submitList(null)
 
-        viewModel.getLastFiveGames(selectedTeam.idTeam)
+        viewModel.getLastFiveGames(team!!.idTeam)
         viewModel.lastFiveEvents.observe(viewLifecycleOwner) { response ->
             when (response) {
                 is com.fimbleenterprises.sportsdb.util.Resource.Success -> {
@@ -193,7 +195,7 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
         // Clear list
         scheduledGamesAdapter.differ.submitList(null)
 
-        viewModel.getNextFiveGames(selectedTeam.idTeam)
+        viewModel.getNextFiveGames(team!!.idTeam)
         viewModel.scheduledEvents.observe(viewLifecycleOwner) { response ->
             when (response) {
                 is com.fimbleenterprises.sportsdb.util.Resource.Success -> {

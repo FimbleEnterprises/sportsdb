@@ -10,10 +10,6 @@ import kotlinx.coroutines.flow.Flow
  */
 class GetSavedTeamsFromDatabaseUseCase(private val sportsdbRepository: MainSportsdbRepository) {
 
-    fun execute(idTeam:String): Flow<SportsTeam> {
-        return sportsdbRepository.getSavedTeam(idTeam)
-    }
-
     fun execute(): Flow<List<SportsTeam>> {
         return sportsdbRepository.getAllSavedTeams()
     }
