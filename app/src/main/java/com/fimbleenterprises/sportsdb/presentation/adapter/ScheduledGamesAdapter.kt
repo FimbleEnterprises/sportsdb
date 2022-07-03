@@ -63,7 +63,7 @@ class ScheduledGamesAdapter: RecyclerView.Adapter<ScheduledGamesAdapter.EventsVi
     /* Sets the onItemClickListener that magically returns an Team object as "it".
     Still no understand!  Caller will implement it as such:
         adapter.setOnItemClickListener {
-            // it == Team
+            // it == ScheduledGame
             it.title
             it.context
             etc.
@@ -85,8 +85,8 @@ class ScheduledGamesAdapter: RecyclerView.Adapter<ScheduledGamesAdapter.EventsVi
                Log.i(TAG, "EventsViewHolder|bind(args:[event]")
 
                if (scheduledGame.dateEvent != null) {
-                   val dtEvent = DateTime(scheduledGame.dateEvent).toLocalDateTime()
-                   val prettyDate = Helpers.DatesAndTimes.getPrettyDateAndTime(dtEvent.toDateTime())
+                   val dtEvent = DateTime(scheduledGame.dateEvent)
+                   val prettyDate = Helpers.DatesAndTimes.getPrettyDate(dtEvent)
                    binding.tvDescription.text = prettyDate
                }
                binding.tvTitle.text = scheduledGame.strEvent

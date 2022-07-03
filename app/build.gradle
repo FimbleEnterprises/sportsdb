@@ -15,7 +15,7 @@ android {
         applicationId "com.fimbleenterprises.sportsdb"
         minSdk 26
         targetSdk 32
-        versionCode 9
+        versionCode 10
         versionName "1.0"
         buildConfigField("String","API_KEY", MY_KEY)
         buildConfigField("String","BASE_URL", MY_URL)
@@ -81,16 +81,15 @@ dependencies {
     // Don't forget to add the following above:
     // id 'com.google.gms.google-services'
 
-    implementation 'androidx.core:core-ktx:1.7.0'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.6.0'
+    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'com.google.android.material:material:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.preference:preference-ktx:1.2.0'
     implementation 'com.google.android.libraries.maps:maps:3.1.0-beta'
-    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:11.0.1'
     implementation 'com.google.firebase:firebase-common-ktx:20.1.1'
-    implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.9.0'
+    implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.9.1'
     implementation 'junit:junit:4.13.2'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
@@ -98,6 +97,7 @@ dependencies {
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.6.1'
     implementation 'com.android.volley:volley:1.2.1'
     androidTestImplementation 'junit:junit:4.13.2'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
 
     // -----------------------------------------------------------
     //                      GOOGLE BILLING
@@ -183,7 +183,7 @@ dependencies {
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
     // To use Kotlin annotation processing tool (kapt)
     kapt("androidx.room:room-compiler:$roomVersion")
-    implementation("com.google.devtools.ksp:symbol-processing-api:1.5.0-1.0.0-alpha10")
+    implementation("com.google.devtools.ksp:symbol-processing-api:1.6.10-1.0.2")
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation("androidx.room:room-ktx:$roomVersion")
 
@@ -211,7 +211,7 @@ dependencies {
     // -----------------------------------------------------------
     //                    Viewmodel and LiveData
     // -----------------------------------------------------------
-    def lifecycle_version = "2.5.0-rc02"
+    def lifecycle_version = "2.6.0-alpha01"
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
@@ -228,14 +228,13 @@ dependencies {
     // -----------------------------------------------------------
     //                         Navigation
     // -----------------------------------------------------------
-    def nav_version = "2.4.2"
+    def nav_version = "2.5.0"
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
     // -----------------------------------------------------------
     //                     LOCATION SERVICES
     // -----------------------------------------------------------
-    def loc_ver = "20.0.0"
     def map_ver = "18.0.2"
     implementation "com.google.android.gms:play-services-maps:$map_ver"
 

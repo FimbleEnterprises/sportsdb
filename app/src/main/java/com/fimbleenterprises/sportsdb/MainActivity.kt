@@ -9,10 +9,12 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.MenuProvider
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.fimbleenterprises.sportsdb.data.model.SportsTeam
 import com.fimbleenterprises.sportsdb.databinding.ActivityMainBinding
 import com.fimbleenterprises.sportsdb.presentation.adapter.GameResultsAdapter
 import com.fimbleenterprises.sportsdb.presentation.adapter.LeaguesAdapter
@@ -27,7 +29,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    // region DAGGER INJECTIONS
+    // region Dagger/Hilt dependency injections
     @Inject
     lateinit var sportsdbViewModelFactory: SportsdbViewModelFactory
     @Inject
@@ -43,15 +45,11 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var myMyBillingWrapper: MyBillingWrapper
     // endregion
-
-    // region Activity-scoped vars
     lateinit var viewModel: SportsdbViewModel
     private lateinit var binding: ActivityMainBinding
     private lateinit var navHostFragment: NavHostFragment
     private lateinit var navController: NavController
-    // endregion
 
-    // region Events
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -76,12 +74,35 @@ class MainActivity : AppCompatActivity() {
         // log analytics
         myAnalytics.logMainActivityEvent()
 
+        // Add menu items without overriding methods in the Activity
+        addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                // Add menu items here
+                menuInflater.inflate(R.menu.main_menu, menu)
+            }
 
-    }
+            override fun onPrepareMenu(menu: Menu) {
+                menu.findItem(R.id.action_purchase_pro)?.isVisible = !viewModel.userIsPro.get() == true
+                super.onPrepareMenu(menu)
+            }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+            override fun onMenuItemSelected(item: MenuItem): Boolean {
+                when (item.itemId) {
+                    R.id.action_privacy_policy -> {
+                        val url = getString(R.string.privacy_policy_url)
+                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        startActivity(browserIntent)
+                    }
+                    R.id.action_purchase_pro -> {
+                        // viewModel.showOptionToBuyPro(supportFragmentManager)
+                        showOptionToBuyPro()
+                    }
+                }
+                return false
+            }
+        })
 
-        return super.onKeyDown(keyCode, event)
+
     }
 
     override fun onResume() {
@@ -98,32 +119,88 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+
+        return super.onKeyDown(keyCode, event)
+    }
+
+    // region Deprecated menu overrides
+    // https://developer.android.com/jetpack/androidx/releases/fragment#1.5.0-alpha04
+
+    // I should just delete this but after using these overrides for so many years I cannot
+    // bring myself to see it go away fully just yet :)
+
+    /*
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.main_menu, menu)
         return super.onCreateOptionsMenu(menu)
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         // Hide get pro menu option if user is already one
-        menu?.findItem(R.id.action_purchase_pro)?.isVisible = !viewModel.userIsPro.get() == true
+        menu.findItem(R.id.action_purchase_pro)?.isVisible = !viewModel.userIsPro.get() == true
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_privacy_policy -> {
-                val url = "https://www.freeprivacypolicy.com/live/226786c7-4348-4919-bbb7-e0313f06562b"
+                val url = getString(R.string.privacy_policy_url)
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 startActivity(browserIntent)
             }
             R.id.action_purchase_pro -> {
-                viewModel.showOptionToBuyPro(supportFragmentManager)
+                // viewModel.showOptionToBuyPro(supportFragmentManager)
+                showOptionToBuyPro()
             }
         }
         return super.onOptionsItemSelected(item)
     }
+    */
+
     // endregion
+
+    /**
+     * Gives the user the ability to purchase the pro version.
+     */
+    fun showOptionToBuyPro(team: SportsTeam) {
+        val bundle = Bundle()
+        bundle.putSerializable("team", team)
+        PurchaseProDialogFragment(object : PurchaseProDialogFragment.OnPurchaseDecisionListener {
+            // We can add this additional team to the followed teams
+            override fun purchased() {
+                MyApp.AppPreferences.isPro = true
+                viewModel.run {
+                    userIsPro.set(MyApp.AppPreferences.isPro)
+                    followTeam(team)
+                }
+            }
+
+            // We can only replace the current followed team with this selected team.
+            override fun declined() {
+                viewModel.run {
+                    unFollowAllTeams()
+                    followTeam(team)
+                }
+                supportFragmentManager.getFragment(bundle, SportsdbViewModel.PURCHASE_DIALOG_TAG)?.onDestroy()
+            }
+        }).show(supportFragmentManager, SportsdbViewModel.PURCHASE_DIALOG_TAG)
+    }
+
+    /**
+     * Gives the user the ability to purchase the pro version.
+     */
+    private fun showOptionToBuyPro() {
+        PurchaseProDialogFragment(object :
+            PurchaseProDialogFragment.OnPurchaseDecisionListener {
+            override fun purchased() {
+                MyApp.AppPreferences.isPro = true
+                viewModel.run { userIsPro.set(MyApp.AppPreferences.isPro) }
+            }
+            override fun declined() { }
+        }).show(supportFragmentManager, null)
+    }
 
     companion object {
         private const val TAG = "FIMTOWN|MainActivity"

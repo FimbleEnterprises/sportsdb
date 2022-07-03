@@ -6,8 +6,7 @@ import com.fimbleenterprises.sportsdb.data.repository.dataSource.SportsdbLocalDa
 import kotlinx.coroutines.flow.Flow
 
 /**
- * This class does the heavy lifting by interacting with the Room DB.  This class must have a related
- * interface specifically for being implemented here..
+ * This class does the heavy lifting by interacting with the Room DB.
  */
 class SportsdbLocalDataSourceImpl
     constructor(

@@ -83,7 +83,7 @@
         android:layout_below="@id/txtChangeLeague">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvNews"
+            android:id="@+id/rvTeams"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="5dp" />

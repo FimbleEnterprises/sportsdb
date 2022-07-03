@@ -5,7 +5,10 @@ import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -32,30 +35,6 @@ class MyTeamsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         (activity as MainActivity).title = "My Followed Teams"
-
-        viewmodel.followedTeams.observe(viewLifecycleOwner) {
-            when {
-                it.isNullOrEmpty() -> {
-                    binding.btnNoTeams.visibility = View.VISIBLE
-                    binding.btnNoTeams.setTextColor(Color.BLUE)
-                    binding.btnNoTeams.setOnClickListener {
-                        if (MyApp.AppPreferences.currentLeague == null) {
-                            findNavController().navigate(
-                                R.id.action_goto_select_league
-                            )
-                        } else if (MyApp.AppPreferences.currentTeam == null) {
-                            findNavController().navigate(
-                                R.id.action_goto_select_team
-                            )
-                        }
-                    }
-                }
-                else -> {
-                    binding.btnNoTeams.visibility = View.GONE
-                }
-            }
-        }
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -75,35 +54,68 @@ class MyTeamsFragment : Fragment() {
 
         // Setup then use the recyclerview
         initRecyclerView()
-        getMyFollowedTeams()
 
-        // Enable our options menu
-        setHasOptionsMenu(true)
+        // Query the database for saved teams and observe the results
+        viewmodel.run {
+            getFollowedTeams()
+            followedTeams.observe(viewLifecycleOwner) { myteams ->
+                if (!myteams.isNullOrEmpty()) {
+                    Log.i(TAG, "getMyTeams: Retrieved ${myteams.size} followed teams")
+                    with(teamsadapter) { differ.submitList(myteams) }
+                    View.GONE.also {
+                        binding.txtNoTeams.visibility = it
+                        binding.btnNoTeams.visibility = it
+                    }
+
+                } else {
+                    View.GONE.also { binding.txtNoTeams.visibility = it }
+                    View.VISIBLE.also { binding.btnNoTeams.visibility = it }
+                    binding.btnNoTeams.setTextColor(Color.BLUE)
+
+                    binding.btnNoTeams.setOnClickListener {
+                        if (MyApp.AppPreferences.currentLeague == null) {
+                            findNavController().navigate(
+                                R.id.action_goto_select_league
+                            )
+                        } else if (MyApp.AppPreferences.currentTeam == null) {
+                            findNavController().navigate(
+                                R.id.action_goto_select_team
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
         // Pop the backstack - I like this to be the "home" fragment.
         findNavController().popBackStack(R.id.action_goto_my_teams, true)
         Log.i(TAG, "-=MyTeamsFragment:onViewCreated Popped backstack. =-")
-    }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.my_teams_menu, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_unfollow_all -> {
-                viewmodel.unFollowAllTeams()
-                findNavController().navigate(
-                    R.id.action_goto_select_league
-                )
+        // region OPTIONS MENU
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                // Add menu items here
+                menuInflater.inflate(R.menu.my_teams_menu, menu)
             }
-        }
-        return true
+
+            override fun onMenuItemSelected(item: MenuItem): Boolean {
+                when (item.itemId) {
+                    R.id.action_unfollow_all -> {
+                        viewmodel.unFollowAllTeams()
+                        findNavController().navigate(
+                            R.id.action_goto_select_league
+                        )
+                    }
+                }
+                return true
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+        // endregion
     }
 
     private fun initRecyclerView() {
-        binding.rvNews.apply {
+        binding.rvTeams.apply {
             // Since we share this adapter with the FindTeams fragment it can sometimes be populated
             // with teams received from the API when we arrive.  That makes for a janky switch when
             // the adapter is re-populated with our db results.  So we clear it first.
@@ -129,17 +141,17 @@ class MyTeamsFragment : Fragment() {
          */
         teamsadapter.setOnItemLongClickListener { selectedTeam: SportsTeam ->
 
-            // build alert dialog
+            // build alert dialog containing the user's options
             val dialogBuilder = AlertDialog.Builder(activity)
             dialogBuilder
                 .setCancelable(false)
                 .setTitle(getString(R.string.dialog_unfollow_team))
                 .setPositiveButton(":Yes") { _, _ ->
                     viewmodel.unFollowTeam(selectedTeam)
-                    viewmodel.deletedTeamCount.observe(viewLifecycleOwner) {
+                    viewmodel.deleteCount.observe(viewLifecycleOwner) {
                        val snackbar = Snackbar.make(
-                            binding.rvNews,
-                            getString(R.string.team_unfollowed),
+                            binding.rvTeams,
+                            getString(R.string.unfollowed),
                            8000
                         ).setAction("Undo") {
                                 // Undo should be as easy as re-following the team again.
@@ -158,18 +170,6 @@ class MyTeamsFragment : Fragment() {
         }
     }
 
-    private fun getMyFollowedTeams() {
-        viewmodel.getFollowedTeams().observe(viewLifecycleOwner) { it ->
-            if (it != null) {
-                Log.i(TAG, "getMyTeams: Retrieved ${it.size} followed teams")
-                with(teamsadapter) { differ.submitList(it) }
-                View.GONE.also { binding.txtNoTeams.visibility = it }
-            } else {
-                View.GONE.also { binding.txtNoTeams.visibility = it }
-            }
-        }
-    }
-
     companion object {
         private const val TAG = "FIMTOWN|MyTeamsFragment"
     }
@@ -177,4 +177,5 @@ class MyTeamsFragment : Fragment() {
     init {
         Log.i(TAG, "Initialized:MyTeamsFragment")
     }
+
 }

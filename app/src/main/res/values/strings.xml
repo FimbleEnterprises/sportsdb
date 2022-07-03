@@ -6,7 +6,7 @@
     <string name="next_five_games">Next 5 games:</string>
     <string name="last_five_games">Last five games:</string>
     <string name="about">About:</string>
-    <string name="menu_show_summaries">Show summaries in box score</string>
+    <string name="menu_show_summaries">Show boxscores</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="menu_change_league">Change League…</string>
@@ -16,7 +16,7 @@
     <string name="my_teams_menu_item">My Teams</string>
     <string name="find_teams_menu_item">Find Teams</string>
     <string name="dialog_unfollow_team">Do you want to unfollow this team?</string>
-    <string name="team_unfollowed">Team unfollowed.</string>
+    <string name="unfollowed">Team unfollowed.</string>
     <string name="find_leagues_menu_item">Choose League</string>
     <string name="view_highlights">View Highlights</string>
     <string name="menu_unfollow_all">Unfollow All</string>
@@ -35,7 +35,13 @@
     <string name="menu_item_purchase_pro">Purchase pro version</string>
     <string name="menu_item_privacy_policy">Privacy Policy</string>
     <string name="yes">Yup</string>
-    <string name="no">No thanks</string>
+    <string name="no">Nah</string>
     <string name="no_team_selected">No team selected!</string>
     <string name="unfollow_title">Are you sure</string>
+    <string name="menu_unfollow_team">Unfollow team…</string>
+    <string name="boxscore_not_available">(BOXSCORE NOT AVAILABLE)</string>
+    <string name="privacy_policy_url">https://www.freeprivacypolicy.com/live/226786c7–4348–4919-bbb7-e0313f06562b</string>
+    <string name="undo">Undo</string>
+    <string name="highlights_fail">Could not load highlights\n%1$s</string>
+    <string name="api_error">An error occurred : %1$s</string>
 </resources>

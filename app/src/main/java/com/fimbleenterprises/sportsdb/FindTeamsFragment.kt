@@ -8,7 +8,10 @@ import android.view.*
 import android.widget.AbsListView
 import android.widget.SearchView
 import android.widget.Toast
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,18 +21,11 @@ import com.fimbleenterprises.sportsdb.presentation.viewmodel.SportsdbViewModel
 
 class FindTeamsFragment : Fragment() {
 
-    private  lateinit var viewmodel: SportsdbViewModel
-    private lateinit var teamsAdapter: TeamsAdapter
+    private lateinit var viewmodel: SportsdbViewModel
+    private lateinit var adapter: TeamsAdapter
     private lateinit var binding: FragmentListTeamsBinding
-
-
     private var isLoading = false
     private var isScrolling = false
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_list_teams, container, false)
@@ -44,7 +40,7 @@ class FindTeamsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding = FragmentListTeamsBinding.bind(view)
         viewmodel = (activity as MainActivity).viewModel
-        teamsAdapter = (activity as MainActivity).teamsAdapter
+        adapter = (activity as MainActivity).teamsAdapter
 
         // If there is no league selected then we should rectify that if possible.
         when (MyApp.AppPreferences.currentLeague) {
@@ -74,68 +70,75 @@ class FindTeamsFragment : Fragment() {
         // Double check if user has purchased pro
         viewmodel.queryUserPurchasedPro()
 
-    }
+        // region OPTIONS
+        val menuHost: MenuHost = requireActivity()
+            menuHost.addMenuProvider(object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    // Add menu items here
+                    menuInflater.inflate(R.menu.find_teams_menu, menu)
+                }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.find_teams_menu, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
+                override fun onMenuItemSelected(item: MenuItem): Boolean {
+                    when (item.itemId) {
+                        R.id.action_change_league -> {
+                            findNavController().navigate(
+                                R.id.action_goto_select_league
+                            )
+                        }
+                    }
+                    return true
+                }
+            }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+        // endregion
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_change_league -> {
-                findNavController().navigate(
-                    R.id.action_goto_select_league
-                )
-            }
-        }
-        return true
     }
 
     @Suppress("SimplifyBooleanWithConstants")
     private fun initRecyclerView() {
-        binding.rvNews.apply {
-            // Since we share this adapter with the MyTeams fragment it can and will be populated
-            // with saved teams from the db when we arrive.  That makes for a janky switch when the
-            // adapter is re-populated with our API results.
-            this@FindTeamsFragment.teamsAdapter.differ.submitList(null)
 
-            // Remember scroll position throughout lifecycle
-            this@FindTeamsFragment.teamsAdapter.stateRestorationPolicy =
-                RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        adapter.setOnItemClickListener { clickedTeam ->
+            // Retrieve followed teams from Room db asynchronously to see if user is following any
+            viewmodel.getFollowedTeams().observe(viewLifecycleOwner) { teamList ->
 
-            adapter = this@FindTeamsFragment.teamsAdapter
-            layoutManager = LinearLayoutManager(activity)
-            addOnScrollListener(this@FindTeamsFragment.onScrollListener)
+                // Bundle an arg for the view cores frag
+                val bundle = Bundle()
+                bundle.putSerializable("team", clickedTeam)
 
-            teamsAdapter.setOnItemClickListener { clickedTeam ->
-                // Retrieve followed teams from Room db asynchronously
-                viewmodel.getFollowedTeams().observe(viewLifecycleOwner) { teamList ->
-
-                    // Bundle an arg for the view cores frag
-                    val bundle = Bundle()
-                    bundle.putSerializable("team", clickedTeam)
-
-                    // If user is following a team we need to check if they have the pro version
-                    // allowing them to follow a second, third etc.
-                    if (teamList.isNotEmpty()) {
-                        viewmodel.run {
-                            if (viewmodel.userIsPro.get() == true) {
-                                followTeam(clickedTeam)
-                                findNavController().navigate(R.id.viewSelectedTeamsScoresFragment, bundle)
-                            } else {
-                                viewmodel.showOptionToBuyPro(clickedTeam, childFragmentManager)
-                            }
+                // If user is following a team we need to check if they have the pro version
+                // allowing them to follow a second, third etc.
+                if (teamList.isNotEmpty()) {
+                    viewmodel.run {
+                        if (viewmodel.userIsPro.get() == true) {
+                            followTeam(clickedTeam)
+                            findNavController().navigate(R.id.viewSelectedTeamsScoresFragment, bundle)
+                        } else {
+                            // viewmodel.showOptionToBuyPro(clickedTeam, childFragmentManager)
+                            (activity as MainActivity).showOptionToBuyPro(clickedTeam)
                         }
-                    } else {
-                        // User is not following any teams and should be allowed to follow this one.
-                        viewmodel.followTeam(clickedTeam)
-                        findNavController().navigate(
-                            R.id.action_goto_view_scores, bundle
-                        )
                     }
+                } else {
+                    // User is not following any teams and should be allowed to follow this one.
+                    viewmodel.followTeam(clickedTeam)
+                    findNavController().navigate(
+                        R.id.action_goto_view_scores, bundle
+                    )
                 }
             }
+        }
+
+        // Since we share this adapter with the MyTeams fragment it can and will be populated
+        // with saved teams from the db when we arrive.  That makes for a janky switch when the
+        // adapter is re-populated with our API results.
+        adapter.differ.submitList(null)
+
+        // Remember scroll position throughout lifecycle
+        adapter.stateRestorationPolicy =
+            RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+
+        binding.rvTeams.apply {
+            layoutManager = LinearLayoutManager(activity)
+            addOnScrollListener(this@FindTeamsFragment.onScrollListener)
+            adapter = this@FindTeamsFragment.adapter
         }
     }
 
@@ -177,23 +180,26 @@ class FindTeamsFragment : Fragment() {
 
         // Clear current list - if search yields zero results the existing list will remain and this
         // would be very confusing.
-        teamsAdapter.differ.submitList(null)
+        adapter.differ.submitList(null)
 
+        // Observe the list of teams retrieved from the API
         MyApp.AppPreferences.currentLeague?.let { viewmodel.getAllTeamsByLeague(it) }
         viewmodel.allTeamsAPIResponse.observe(viewLifecycleOwner) { response ->
             when (response) {
+
                 is com.fimbleenterprises.sportsdb.util.Resource.Success -> {
                     hideProgressBar()
                     response.data?.let { it ->
                         if (it.sportsTeams.isNullOrEmpty()) {
                             binding.resultsContainer.visibility = View.VISIBLE
-                            teamsAdapter.differ.submitList(null)
+                            adapter.differ.submitList(null)
                         } else {
-                            teamsAdapter.differ.submitList(it.sportsTeams.toList())
+                            adapter.differ.submitList(it.sportsTeams.toList())
                             binding.resultsContainer.visibility = View.GONE
                         }
                     }
                 }
+
                 is com.fimbleenterprises.sportsdb.util.Resource.Error -> {
                     hideProgressBar()
                     binding.resultsContainer.visibility = View.GONE
@@ -202,6 +208,7 @@ class FindTeamsFragment : Fragment() {
                             .show()
                     }
                 }
+
                 is com.fimbleenterprises.sportsdb.util.Resource.Loading -> {
                     showProgressBar()
                     binding.resultsContainer.visibility = View.GONE
@@ -222,7 +229,7 @@ class FindTeamsFragment : Fragment() {
 
                     hideProgressBar()
                     response.data?.let {
-                        teamsAdapter.differ.submitList(it.sportsTeams)
+                        adapter.differ.submitList(it.sportsTeams)
                     }
                 }
                 is com.fimbleenterprises.sportsdb.util.Resource.Error -> {
@@ -267,7 +274,7 @@ class FindTeamsFragment : Fragment() {
        @Suppress("UNUSED_VARIABLE")
        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
            super.onScrolled(recyclerView, dx, dy)
-           val layoutManager = binding.rvNews.layoutManager as LinearLayoutManager
+           val layoutManager = binding.rvTeams.layoutManager as LinearLayoutManager
            val sizeOfTheCurrentList = layoutManager.itemCount
            val visibleItems = layoutManager.childCount
            val topPosition = layoutManager.findFirstVisibleItemPosition()

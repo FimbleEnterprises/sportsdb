@@ -3,9 +3,6 @@ package com.fimbleenterprises.sportsdb.data.repository.dataSource
 import com.fimbleenterprises.sportsdb.data.model.SportsTeam
 import kotlinx.coroutines.flow.Flow
 
-/**
- * This interface exists solely to be implemented by the NewsLocalDataSourceImpl class.
- */
 interface SportsdbLocalDataSource {
     suspend fun saveTeamsToDB(sportsTeams:List<SportsTeam>)
     suspend fun saveTeamToDB(sportsTeam: SportsTeam):Long

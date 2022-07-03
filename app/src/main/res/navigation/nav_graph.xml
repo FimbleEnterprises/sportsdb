@@ -38,13 +38,6 @@
         app:popUpTo="@+id/mobile_navigation"
         app:popUpToInclusive="true" />
 
-    <action
-        android:id="@+id/action_goto_test_fragment"
-        app:destination="@id/testFragment"
-        app:launchSingleTop="true"
-        app:popUpTo="@+id/mobile_navigation"
-        app:popUpToInclusive="true" />
-
     <fragment
         android:id="@+id/myTeamsFragment"
         android:name="com.fimbleenterprises.sportsdb.MyTeamsFragment"
@@ -83,6 +76,7 @@
             app:nullable="true"
             android:defaultValue="@null" />
     </fragment>
+    <!-- NOT IMPLEMENTED - WASN'T FEELING THIS FRAG
     <fragment
         android:id="@+id/viewHighlightsFragment"
         android:name="com.fimbleenterprises.sportsdb.ViewHighlightsFragment"
@@ -96,11 +90,6 @@
             android:name="url"
             app:argType="string"
             android:defaultValue="null" />
-    </fragment>
-    <fragment
-        android:id="@+id/testFragment"
-        android:name="com.fimbleenterprises.sportsdb.TestFragment"
-        android:label="fragment_test"
-        tools:layout="@layout/fragment_test" />
+    </fragment>-->
 
 </navigation>

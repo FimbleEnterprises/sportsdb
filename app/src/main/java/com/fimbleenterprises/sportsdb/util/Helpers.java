@@ -106,7 +106,10 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
+/**
+ * My old ass Java helper methods converted to Kotlin.  Haven't used most of this in years so
+ * test thoroughly before put in production!
+ */
 @SuppressWarnings("unused")
 public class Helpers {
 

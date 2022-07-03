@@ -1,30 +1,24 @@
 @file:Suppress("unused")
 
 package com.fimbleenterprises.sportsdb.presentation.viewmodel
-
-import android.app.AlertDialog
 import android.app.Application
-import android.app.Dialog
-import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.databinding.ObservableBoolean
-import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.*
-import com.fimbleenterprises.sportsdb.util.FimTown
-import com.fimbleenterprises.sportsdb.util.Resource
-import com.fimbleenterprises.sportsdb.domain.usecase.*
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.liveData
+import androidx.lifecycle.viewModelScope
 import com.fimbleenterprises.sportsdb.MyApp
 import com.fimbleenterprises.sportsdb.MyBillingWrapper
-import com.fimbleenterprises.sportsdb.R
 import com.fimbleenterprises.sportsdb.data.model.*
+import com.fimbleenterprises.sportsdb.domain.usecase.*
+import com.fimbleenterprises.sportsdb.util.FimTown
+import com.fimbleenterprises.sportsdb.util.Resource
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
-import java.lang.Exception
 
-class SportsdbViewModel(
+class SportsdbViewModel (
     private val app: Application,
     private val getAllTeamsFromAPIUseCase: GetTeamsFromAPIUseCase,
     private val getNextFiveEventsFromAPIUseCase: GetNextFiveEventsFromAPIUseCase,
@@ -35,17 +29,17 @@ class SportsdbViewModel(
     private val searchTeamToFollowUseCase: SearchTeamToFollowUseCase,
     private val getLeaguesFromAPIUseCase: GetLeaguesFromAPIUseCase,
     private val billingWrapper: MyBillingWrapper
-) : AndroidViewModel(app) {
+) : ViewModel() {
 
     val filteredLeagues: MutableLiveData<List<League>> = MutableLiveData()
     val allLeagues: MutableLiveData<Resource<LeagueListApiResponse>> = MutableLiveData()
     val allTeamsAPIResponse: MutableLiveData<Resource<AllTeamsAPIResponse>> = MutableLiveData()
     val followedTeams: MutableLiveData<List<SportsTeam>> = MutableLiveData()
     val searchedTeams: MutableLiveData<Resource<AllTeamsAPIResponse>> = MutableLiveData()
-    val deletedTeamCount: MutableLiveData<Int> = MutableLiveData()
+    val deleteCount: MutableLiveData<Int> = MutableLiveData()
     val scheduledEvents: MutableLiveData<Resource<ScheduledGamesApiResponse>> = MutableLiveData()
     val lastFiveEvents: MutableLiveData<Resource<GameResultsApiResponse>> = MutableLiveData()
-    private val mySavedTeamId: MutableLiveData<Long> = MutableLiveData()
+    // private val mySavedTeamId: MutableLiveData<Long> = MutableLiveData()
     val showsummariesinboxscore: MutableLiveData<Boolean> = MutableLiveData()
     val userIsPro: ObservableBoolean = ObservableBoolean(false)
 
@@ -151,7 +145,7 @@ class SportsdbViewModel(
         sportsTeam.following = true
         MyApp.AppPreferences.currentLeague = sportsTeam.strLeague
         MyApp.AppPreferences.currentTeam = sportsTeam
-        mySavedTeamId.postValue(insertTeamInDatabaseUseCase.execute(sportsTeam))
+        insertTeamInDatabaseUseCase.execute(sportsTeam)
     }
 
     /**
@@ -172,7 +166,7 @@ class SportsdbViewModel(
     fun unFollowTeam(sportsTeam: SportsTeam) {
         viewModelScope.launch {
             MyApp.AppPreferences.currentTeam = null
-            deletedTeamCount.postValue(deleteSavedTeamsUseCase.execute(sportsTeam))
+            deleteCount.postValue(deleteSavedTeamsUseCase.execute(sportsTeam))
         }
     }
 
@@ -185,7 +179,7 @@ class SportsdbViewModel(
         viewModelScope.launch {
             MyApp.AppPreferences.currentTeam = null
             MyApp.AppPreferences.currentLeague = null
-            deletedTeamCount.postValue(deleteSavedTeamsUseCase.execute())
+            deleteCount.postValue(deleteSavedTeamsUseCase.execute())
         }
     }
 
@@ -206,86 +200,6 @@ class SportsdbViewModel(
 
         }catch (e:Exception){
             searchedTeams.postValue(Resource.Error(e.message.toString()))
-        }
-
-    }
-
-    /**
-     * Gives the user the ability to purchase the pro version.
-     */
-    fun showOptionToBuyPro(team:SportsTeam, childFragmentManager: FragmentManager) {
-        val bundle = Bundle()
-        bundle.putSerializable("team", team)
-        PurchaseConfirmationDialogFragment(object : OnPurchaseDecisionListener {
-            // We can add this additional team to the followed teams
-            override fun purchased() {
-                MyApp.AppPreferences.isPro = true
-                userIsPro.set(MyApp.AppPreferences.isPro)
-                followTeam(team)
-            }
-
-            // We can only replace the current followed team with this selected team.
-            override fun declined() {
-                unFollowAllTeams()
-                followTeam(team)
-                MyApp.AppPreferences.isPro = false
-                userIsPro.set(MyApp.AppPreferences.isPro)
-                childFragmentManager.getFragment(bundle, PURCHASE_DIALOG)?.onDestroy()
-            }
-        }).show(childFragmentManager, PURCHASE_DIALOG)
-    }
-
-    /**
-     * Gives the user the ability to purchase the pro version.
-     */
-    fun showOptionToBuyPro(childFragmentManager: FragmentManager) {
-        PurchaseConfirmationDialogFragment(object : OnPurchaseDecisionListener {
-            override fun purchased() {
-                MyApp.AppPreferences.isPro = true
-                userIsPro.set(MyApp.AppPreferences.isPro)
-            }
-            override fun declined() { }
-        }).show(childFragmentManager, null)
-    }
-
-    interface OnPurchaseDecisionListener {
-        fun purchased()
-        fun declined()
-    }
-
-    /**
-     * Basic dialog fragment to prompt the user to give us money and happiness for all parties!  I
-     * mean, it would be dumb because this app is kinda dumb but a fool and his money are easily
-     * parted!
-     */
-    class PurchaseConfirmationDialogFragment
-    constructor(
-        private val decisionListener: OnPurchaseDecisionListener
-    ) : DialogFragment() {
-
-        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-            AlertDialog.Builder(requireContext())
-                .setMessage(getString(R.string.purchase_pro_version))
-                .setPositiveButton(getString(R.string.yes)) { _,_ ->
-                    Toast.makeText(context, getString(R.string.thankyou), Toast.LENGTH_SHORT).show()
-                    decisionListener.purchased()
-                    Log.i(TAG,"-= PURCHASE CONFIRMED! =-")
-                    this.dismiss()
-                }
-                .setNegativeButton(getString(R.string.no)) {_,_ ->
-                    Toast.makeText(context, getString(R.string.no_thankyou), Toast.LENGTH_SHORT).show()
-                    decisionListener.declined()
-                    Log.i(TAG, "-= PURCHASE DECLINED =-")
-                    this.dismiss()
-                }
-                .create()
-
-        companion object {
-            private const val TAG = "FIMTOWN|PurchaseConfirmationDialogFragment"
-        }
-
-        init {
-            Log.i(TAG, "Initialized:PurchaseConfirmationDialogFragment")
         }
 
     }
@@ -354,7 +268,7 @@ class SportsdbViewModel(
     companion object {
         private const val TAG = "FIMTOWN|SportsdbViewModel"
         const val PRO_SKU = "sportsdb_pro_1"
-        const val PURCHASE_DIALOG = "PURCHASE_DIALOG"
+        const val PURCHASE_DIALOG_TAG = "PURCHASE_DIALOG"
     }
 
     init {

@@ -18,7 +18,7 @@ import com.fimbleenterprises.sportsdb.presentation.viewmodel.SportsdbViewModel
 class FindLeaguesFragment : Fragment() {
 
     private lateinit var binding: FragmentFindLeaguesBinding
-    private lateinit var leaguesadapter: LeaguesAdapter
+    private lateinit var adapter: LeaguesAdapter
     private lateinit var viewmodel: SportsdbViewModel
     private var isLoading = true
 
@@ -34,7 +34,7 @@ class FindLeaguesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding = FragmentFindLeaguesBinding.bind(view)
-        (activity as MainActivity).leaguesAdapter.also { leaguesadapter = it }
+        (activity as MainActivity).leaguesAdapter.also { adapter = it }
         (activity as MainActivity).viewModel.also { viewmodel = it }
         initRecyclerView()
         initSearchView()
@@ -47,9 +47,12 @@ class FindLeaguesFragment : Fragment() {
         (activity as MainActivity).title = getString(R.string.choose_league)
     }
 
+    /**
+     * Set on click listener to the adapter and bind the adapter to the recyclerview
+     */
     private fun initRecyclerView() {
 
-        leaguesadapter.setOnItemClickListener {
+        adapter.setOnItemClickListener {
             MyApp.AppPreferences.currentLeague = it.strLeague
             findNavController().navigate(
                 R.id.action_goto_select_team
@@ -57,13 +60,13 @@ class FindLeaguesFragment : Fragment() {
         }
 
         binding.recyclerview.apply {
-            adapter = leaguesadapter
+            adapter = this@FindLeaguesFragment.adapter
             layoutManager = LinearLayoutManager(activity)
         }
     }
 
     /**
-     * Sets up the search view and adds some simple pre-reqs prior to searching
+     * Sets up the search view and adds some simple prereqs prior to searching
      */
     private fun initSearchView() {
         binding.svLeagues.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -99,7 +102,7 @@ class FindLeaguesFragment : Fragment() {
             when (response) {
                 is com.fimbleenterprises.sportsdb.util.Resource.Success -> {
                     hideProgressBar()
-                    response.data?.let { leaguesadapter.differ.submitList(it.leagues) }
+                    response.data?.let { adapter.differ.submitList(it.leagues) }
                 }
                 is com.fimbleenterprises.sportsdb.util.Resource.Error -> {
                     hideProgressBar()
@@ -124,7 +127,7 @@ class FindLeaguesFragment : Fragment() {
 
         viewmodel.filterAllLeagues(query)
         viewmodel.filteredLeagues.observe(viewLifecycleOwner) { response: List<League> ->
-            leaguesadapter.differ.submitList(response)
+            adapter.differ.submitList(response)
         }
 
         // Add a boring event to Firebase analytics

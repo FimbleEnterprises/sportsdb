@@ -2,6 +2,7 @@ package com.fimbleenterprises.sportsdb.presentation.adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
@@ -77,7 +78,7 @@ class GameResultsAdapter constructor(private val context: Context):RecyclerView.
     /* Sets the onItemClickListener that magically returns an Team object as "it".
     Still no understand!  Caller will implement it as such:
         adapter.setOnItemClickListener {
-            // it == Team
+            // it == GameResult
             it.title
             it.context
             etc.
@@ -93,17 +94,17 @@ class GameResultsAdapter constructor(private val context: Context):RecyclerView.
     }
 
     inner class EventsViewHolder(
-        private val binding:GameResultListItemBinding):
-        RecyclerView.ViewHolder(binding.root){
-           @SuppressLint("SetTextI18n")
-           fun bind(gameResult: GameResult){
+        private val binding:GameResultListItemBinding): RecyclerView.ViewHolder(binding.root) {
+
+            @SuppressLint("SetTextI18n")
+            fun bind(gameResult: GameResult){
                Log.i(TAG, "EventsViewHolder|bind(args:[event]")
 
                if (gameResult.dateEvent != null && gameResult.dateEvent != "") {
 
                    try { // Parsing dates is never trivial
-                       val dtEvent = DateTime(gameResult.dateEvent).toLocalDateTime()
-                       val prettyDate = Helpers.DatesAndTimes.getPrettyDateAndTime(dtEvent.toDateTime())
+                       val dtEvent = DateTime(gameResult.dateEvent)
+                       val prettyDate = Helpers.DatesAndTimes.getPrettyDate(dtEvent)
                        binding.txtDate.text ="${prettyDate}\n${gameResult.strEvent}"
                    } catch (exception:Exception) {
                        Log.e(TAG, "bind: ${exception.localizedMessage}"
@@ -135,7 +136,7 @@ class GameResultsAdapter constructor(private val context: Context):RecyclerView.
                }
 
                // Check if highlights are available
-               if (gameResult.strVideo != null) {
+               if (!gameResult.strVideo.isNullOrBlank()) {
                    binding.txtHighlights.text = context.getString(R.string.highlights_available)
                    Helpers.Animations.pulseAnimation(binding.txtHighlights)
                } else {
@@ -144,9 +145,15 @@ class GameResultsAdapter constructor(private val context: Context):RecyclerView.
 
                when { // User can opt to show ugly ass box scores (prolly only applies to MLB)
                    MyApp.AppPreferences.showSummariesInBoxscore -> {
-                       binding.txtSummary.text = "${Html.fromHtml("<br />${gameResult
-                           .strResult}", Html.FROM_HTML_SEPARATOR_LINE_BREAK_DIV)}"
                        binding.txtSummary.visibility = VISIBLE
+                       if (!gameResult.strResult.isNullOrEmpty()) {
+                           binding.txtSummary.text = "${Html.fromHtml("<br />${gameResult
+                               .strResult}", Html.FROM_HTML_SEPARATOR_LINE_BREAK_DIV)}"
+                           binding.txtSummary.setTextColor(Color.BLUE)
+                       } else {
+                           binding.txtSummary.text = context.getString(R.string.boxscore_not_available)
+                           binding.txtSummary.setTextColor(Color.RED)
+                       }
                    }
                    else -> {
                        binding.txtSummary.visibility = GONE

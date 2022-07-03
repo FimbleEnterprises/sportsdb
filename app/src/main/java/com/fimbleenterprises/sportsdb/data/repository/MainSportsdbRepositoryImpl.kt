@@ -11,8 +11,7 @@ import retrofit2.Response
 
 /**
  * This class will do the actual lifting for all things remote or local.  This class does the getting from
- * web services to saving to local databases.  In order to do all of those things you will need to
- * provide the interfaces for each of those categories (web, db etc.) as constructors.
+ * web services to saving to local databases.
  */
 class MainSportsdbRepositoryImpl(
         private val sportsdbRemoteDataSource: SportsdbRemoteDataSource,
