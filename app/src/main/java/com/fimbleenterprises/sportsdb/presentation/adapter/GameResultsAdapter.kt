@@ -102,10 +102,12 @@ class GameResultsAdapter constructor(private val context: Context):RecyclerView.
 
                if (gameResult.dateEvent != null && gameResult.dateEvent != "") {
 
-                   try { // Parsing dates is never trivial
-                       val dtEvent = DateTime(gameResult.dateEvent)
+                   try {
+                       Log.i(TAG, "-=EventsViewHolder:bind ${gameResult.toPrettyDateTime()} =-")
+                       /*val dtEvent = DateTime(gameResult.dateEvent)
                        val prettyDate = Helpers.DatesAndTimes.getPrettyDate(dtEvent)
-                       binding.txtDate.text ="${prettyDate}\n${gameResult.strEvent}"
+                       binding.txtDate.text ="${prettyDate}\n${gameResult.strEvent}"*/
+                       binding.txtDate.text = gameResult.toPrettyDateTime()
                    } catch (exception:Exception) {
                        Log.e(TAG, "bind: ${exception.localizedMessage}"
                            , exception)

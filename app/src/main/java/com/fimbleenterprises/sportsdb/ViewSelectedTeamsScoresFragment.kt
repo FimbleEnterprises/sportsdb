@@ -22,6 +22,7 @@ import com.fimbleenterprises.sportsdb.presentation.adapter.GameResultsAdapter
 import com.fimbleenterprises.sportsdb.presentation.adapter.ScheduledGamesAdapter
 import com.fimbleenterprises.sportsdb.presentation.viewmodel.SportsdbViewModel
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
 
 class ViewSelectedTeamsScoresFragment : Fragment() {
 
@@ -50,15 +51,17 @@ class ViewSelectedTeamsScoresFragment : Fragment() {
 
         // Get the team selected by virtue of navArgs() created in the nav_graph
         val args : ViewSelectedTeamsScoresFragmentArgs by navArgs()
-        team = args.team
-        Log.i(TAG, "-=ViewSelectedTeamsScoresFragment:onViewCreated|Arg: ${team?.strTeam} =-")
 
         // This should really never be null but just in case we bail.
-        if (team == null) {
+        if (args.team == null) {
             findNavController().navigate(R.id.myTeamsFragment)
             Toast.makeText(context, getString(R.string.no_team_selected), Toast.LENGTH_SHORT).show()
             return
         }
+
+        val strTeam = args.team!!
+        team = Gson().fromJson(strTeam, SportsTeam::class.java)
+        Log.i(TAG, "-=ViewSelectedTeamsScoresFragment:onViewCreated|Arg: ${team?.strTeam} =-")
 
         // Prepare the lists
         initRecyclerViews()

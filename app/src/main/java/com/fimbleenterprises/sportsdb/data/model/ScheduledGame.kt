@@ -1,9 +1,12 @@
 package com.fimbleenterprises.sportsdb.data.model
 
 
+import android.util.Log
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.fimbleenterprises.sportsdb.util.Helpers
 import com.google.gson.annotations.SerializedName
+import org.joda.time.DateTime
 import java.io.Serializable
 
 @Entity(
@@ -103,4 +106,37 @@ data class ScheduledGame(
     val strVenue: Any?,
     @SerializedName("strVideo")
     val strVideo: Any?
-): Serializable
+): Serializable {
+
+    /**
+     * Attempts to convert the date and time to a DateTime object.
+     */
+    private fun toDateTime() : DateTime {
+
+        return if (this.dateEvent != null && this.strTime != null) {
+            if (strTime.startsWith("00")) { // Noon seems to be returned as 00 so this hacky fix may work
+                val correctedTime = strTime.replaceRange(0,3, "12:")
+                DateTime.parse(dateEvent + "T" + correctedTime)
+            } else {
+                DateTime.parse(dateEvent + "T" + strTime)
+            }
+        } else if (this.dateEvent != null) {
+            DateTime.parse(this.dateEvent)
+        } else {
+            DateTime(1900, 1, 1, 1, 1)
+        }
+    }
+
+    fun toPrettyDateTime() : String {
+        return Helpers.DatesAndTimes.getPrettyDateAndTime(toDateTime())
+    }
+
+    companion object {
+        private const val TAG = "FIMTOWN|ScheduledGame"
+    }
+
+    init {
+        Log.i(TAG, "Initialized:ScheduledGame")
+    }
+
+}

@@ -15,10 +15,8 @@ android {
         applicationId "com.fimbleenterprises.sportsdb"
         minSdk 26
         targetSdk 32
-        versionCode 10
-        versionName "1.0"
-        buildConfigField("String","API_KEY", MY_KEY)
-        buildConfigField("String","BASE_URL", MY_URL)
+        versionCode 12
+        versionName "1.01"
         buildConfigField("String","SPORTSDB_FREE_API_KEY", SPORTSDB_FREEKEY)
         buildConfigField("String","SPORTSDB_PAID_API_KEY", SPORTSDB_PAIDKEY)
         buildConfigField("String","SPORTSDB_BASE_URL", SPORTSDB_URL)

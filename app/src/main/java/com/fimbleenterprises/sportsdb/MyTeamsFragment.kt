@@ -17,6 +17,7 @@ import com.fimbleenterprises.sportsdb.databinding.FragmentListTeamsBinding
 import com.fimbleenterprises.sportsdb.presentation.adapter.TeamsAdapter
 import com.fimbleenterprises.sportsdb.presentation.viewmodel.SportsdbViewModel
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
 
 class MyTeamsFragment : Fragment() {
 
@@ -132,7 +133,7 @@ class MyTeamsFragment : Fragment() {
         teamsadapter.setOnItemClickListener {
             MyApp.AppPreferences.currentTeam = it
             val bundle = Bundle()
-            bundle.putSerializable("team", it)
+            bundle.putString("team", Gson().toJson(it))
             findNavController().navigate(R.id.action_goto_view_scores, bundle)
         }
 

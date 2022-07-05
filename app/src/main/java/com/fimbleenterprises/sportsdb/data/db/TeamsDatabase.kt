@@ -8,7 +8,7 @@ import com.fimbleenterprises.sportsdb.data.model.SportsTeam
 // This annotation is what gets Room to actually create and maintain a single table in the database.
 @Database(
     entities = [SportsTeam::class],
-    version =  3,
+    version =  5,
     exportSchema = false
 )
 // OPTIONAL

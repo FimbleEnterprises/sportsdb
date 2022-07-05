@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.fimbleenterprises.sportsdb.databinding.FragmentListTeamsBinding
 import com.fimbleenterprises.sportsdb.presentation.adapter.TeamsAdapter
 import com.fimbleenterprises.sportsdb.presentation.viewmodel.SportsdbViewModel
+import com.google.gson.Gson
 
 class FindTeamsFragment : Fragment() {
 
@@ -102,7 +103,8 @@ class FindTeamsFragment : Fragment() {
 
                 // Bundle an arg for the view cores frag
                 val bundle = Bundle()
-                bundle.putSerializable("team", clickedTeam)
+                val teamJson = Gson().toJson(clickedTeam)
+                bundle.putSerializable("team", teamJson)
 
                 // If user is following a team we need to check if they have the pro version
                 // allowing them to follow a second, third etc.

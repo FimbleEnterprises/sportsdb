@@ -85,9 +85,10 @@ class ScheduledGamesAdapter: RecyclerView.Adapter<ScheduledGamesAdapter.EventsVi
                Log.i(TAG, "EventsViewHolder|bind(args:[event]")
 
                if (scheduledGame.dateEvent != null) {
-                   val dtEvent = DateTime(scheduledGame.dateEvent)
+                   /*val dtEvent = DateTime(scheduledGame.dateEvent)
                    val prettyDate = Helpers.DatesAndTimes.getPrettyDate(dtEvent)
-                   binding.tvDescription.text = prettyDate
+                   binding.tvDescription.text = prettyDate*/
+                   binding.tvDescription.text = scheduledGame.toPrettyDateTime()
                }
                binding.tvTitle.text = scheduledGame.strEvent
 

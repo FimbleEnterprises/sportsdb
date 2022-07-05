@@ -27,8 +27,8 @@
         app:popUpToInclusive="true">
         <argument
             android:name="team"
-
-            app:argType="com.fimbleenterprises.sportsdb.data.model.SportsTeam" />
+            app:nullable="true"
+            app:argType="string" />
     </action>
 
     <action
@@ -65,14 +65,9 @@
         android:name="com.fimbleenterprises.sportsdb.ViewSelectedTeamsScoresFragment"
         android:label="fragment_view_selected_teams_scores"
         tools:layout="@layout/fragment_view_selected_teams_scores" >
-        <action
-            android:id="@+id/action_viewSelectedTeamsScoresFragment_to_action_goto_view_highlights"
-            app:launchSingleTop="true"
-            app:popUpTo="@id/viewHighlightsFragment">
-        </action>
         <argument
             android:name="team"
-            app:argType="com.fimbleenterprises.sportsdb.data.model.SportsTeam"
+            app:argType="string"
             app:nullable="true"
             android:defaultValue="@null" />
     </fragment>
